@@ -41,7 +41,7 @@
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--dsw-specific-chat-gap, 16px);
 }
 
 /* Settled-flow identity boundary. It is neutral today and becomes the natural
@@ -64,8 +64,9 @@
 /* Selection still sets data-selected for details linkage; no outline —
    tool rows match Think chrome (no selected ring). */
 
-/* Turn activity keeps the former loader's one-line footprint. A pale
-   brand-blue band sweeps from left to right; reduced-motion keeps it static. */
+/* Turn activity keeps the former loader's one-line footprint. The sweep uses
+   semantic business-state colors so product themes can recolor ongoing work
+   without changing success, warning, or error feedback. */
 .turnStatus {
   align-self: flex-start;
   flex: none;
@@ -76,11 +77,11 @@
   white-space: nowrap;
   background: linear-gradient(
     90deg,
-    var(--dsw-static-deepseek-500) 0%,
-    var(--dsw-static-deepseek-500) 40%,
-    var(--dsw-static-deepseek-200) 50%,
-    var(--dsw-static-deepseek-500) 60%,
-    var(--dsw-static-deepseek-500) 100%
+    var(--dsw-alias-state-business-primary) 0%,
+    var(--dsw-alias-state-business-primary) 40%,
+    var(--dsw-alias-state-business-tertiary) 50%,
+    var(--dsw-alias-state-business-primary) 60%,
+    var(--dsw-alias-state-business-primary) 100%
   );
   background-position: 100% 0;
   background-size: 250% 100%;

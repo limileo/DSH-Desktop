@@ -7,7 +7,7 @@
  */
 import clsx from 'clsx'
 import {
-  IconDarkOutline16, IconFollowsystemOutline16, IconLightOutline16,
+  IconDarkOutline16, IconFollowsystemOutline16, IconLightOutline16, IconNewChatOutline16, IconSparkle16,
 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { PropsLocale, PropsRuntime, PropsStore } from '@deepseek-ai/dsh-client-ui-slots'
 import type { ThemePreference } from '../theme-settings.ts'
@@ -32,6 +32,8 @@ const CUBES: readonly { id: ThemePreference; labelKey: ThemeKey; Icon: typeof Ic
   { id: 'light', labelKey: 'appearance.light', Icon: IconLightOutline16 },
   { id: 'dark', labelKey: 'appearance.dark', Icon: IconDarkOutline16 },
   { id: 'system', labelKey: 'appearance.system', Icon: IconFollowsystemOutline16 },
+  { id: 'wechat', labelKey: 'appearance.wechat', Icon: IconNewChatOutline16 },
+  { id: 'light-texture', labelKey: 'appearance.lightTexture', Icon: IconSparkle16 },
 ]
 
 /**

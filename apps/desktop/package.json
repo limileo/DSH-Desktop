@@ -1,0 +1,88 @@
+{
+  "name": "@deepseek-ai/dsh-desktop",
+  "description": "DeepSeek Harness desktop application with tray-owned Host lifecycle",
+  "version": "0.1.0-rc.5",
+  "author": "limileo",
+  "homepage": "https://github.com/limileo/DSH-Desktop",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/limileo/DSH-Desktop.git"
+  },
+  "private": true,
+  "type": "module",
+  "main": "lib/main.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json && tsdown",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tests/tsconfig.json",
+    "dev": "pnpm --workspace-root run build && electron .",
+    "package": "pnpm --workspace-root run build && node --import tsx scripts/stage-runtime.ts && electron-builder --dir",
+    "package:unsigned": "pnpm --workspace-root run build && node --import tsx scripts/stage-runtime.ts && node --import tsx scripts/package-unsigned.ts",
+    "dist:unsigned": "pnpm --workspace-root run build && node --import tsx scripts/stage-runtime.ts && node --import tsx scripts/dist-unsigned.ts",
+    "dist": "pnpm --workspace-root run build && node --import tsx scripts/stage-runtime.ts && electron-builder",
+    "dist:mac": "node --import tsx scripts/release-mac.ts"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^22.20.0",
+    "electron": "43.4.0",
+    "electron-builder": "26.15.3",
+    "tsdown": "^0.22.2",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.8"
+  },
+  "build": {
+    "appId": "io.github.limileo.dsh-desktop",
+    "productName": "DSH Desktop",
+    "electronDist": "node_modules/electron/dist",
+    "afterPack": "./scripts/verify-packaged-runtime.ts",
+    "asar": true,
+    "files": [
+      "lib/**",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "resources",
+        "to": "desktop-resources"
+      },
+      {
+        "from": "runtime-host/package.json",
+        "to": "host/package.json"
+      },
+      {
+        "from": "runtime-host/node_modules",
+        "to": "host/node_modules"
+      }
+    ],
+    "mac": {
+      "category": "public.app-category.developer-tools",
+      "hardenedRuntime": true,
+      "icon": "build/icon.icns",
+      "notarize": true,
+      "target": [
+        "dir"
+      ]
+    },
+    "win": {
+      "icon": "build/icon.png",
+      "target": [
+        "nsis"
+      ]
+    },
+    "nsis": {
+      "allowToChangeInstallationDirectory": true,
+      "artifactName": "DSH-Desktop-Windows-${arch}-Setup-${version}.${ext}",
+      "createDesktopShortcut": "always",
+      "createStartMenuShortcut": true,
+      "oneClick": false,
+      "perMachine": false,
+      "shortcutName": "DSH Desktop"
+    },
+    "linux": {
+      "category": "Development",
+      "target": [
+        "dir"
+      ]
+    }
+  }
+}

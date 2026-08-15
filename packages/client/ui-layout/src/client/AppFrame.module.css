@@ -4,7 +4,7 @@
   grid-template-rows: 100%;
   height: 100%;
   overflow: hidden;
-  background: var(--dsw-alias-bg-base);
+  background: var(--dsw-specific-app-background, var(--dsw-alias-bg-base));
   /* Collapse/expand animates the tracks on the deepsuite sider curve
      (--ds-ease-in-out / --ds-transition-duration-slow, ui-theme base.css). */
   transition: grid-template-columns var(--ds-transition-duration-slow) var(--ds-ease-in-out);
@@ -23,13 +23,20 @@
 }
 
 .sidebarCol {
+  grid-column: 1;
+  grid-row: 1;
   min-width: 0;
   overflow: hidden;
-  background: var(--dsw-specific-sidebar-fill);
-  border-right: 1px solid var(--dsw-alias-border-l1);
+  background: var(--dsw-specific-sidebar-column-fill, var(--dsw-specific-sidebar-fill));
+  border-right: var(
+    --dsw-specific-sidebar-column-divider,
+    1px solid var(--dsw-alias-border-l1)
+  );
 }
 
 .centerCol {
+  grid-column: 2;
+  grid-row: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
@@ -37,9 +44,43 @@
 }
 
 .detailsCol {
+  grid-column: 3;
+  grid-row: 1;
   min-width: 0;
   overflow: hidden;
   border-left: 1px solid var(--dsw-alias-border-l2);
+}
+
+/* The native material is available only on macOS and Windows. AppFrame stays
+   the paint owner: its sidebar admits that material through a theme tint,
+   while the work columns remain ordinary opaque application surfaces. */
+:global(html[data-dsh-desktop-platform='darwin']) .frame,
+:global(html[data-dsh-desktop-platform='win32']) .frame {
+  background: var(--dsw-specific-app-background, transparent);
+}
+
+:global(html[data-dsh-desktop-platform='darwin']) .sidebarCol,
+:global(html[data-dsh-desktop-platform='win32']) .sidebarCol {
+  background: var(
+    --dsw-specific-sidebar-column-fill,
+    color-mix(in srgb, var(--dsw-specific-sidebar-fill) 72%, transparent)
+  );
+}
+
+:global(html[data-dsh-desktop-platform='darwin']) .centerCol,
+:global(html[data-dsh-desktop-platform='darwin']) .detailsCol,
+:global(html[data-dsh-desktop-platform='win32']) .centerCol,
+:global(html[data-dsh-desktop-platform='win32']) .detailsCol {
+  background: var(--dsw-specific-center-column-fill, var(--dsw-alias-bg-base));
+}
+
+/* Linux places its native title-bar overlay above the work columns. Windows
+   composes its overlay into the first Conversation row, while macOS traffic
+   lights stay wholly inside the sidebar. */
+:global(html[data-dsh-desktop-platform='linux']) .centerCol,
+:global(html[data-dsh-desktop-platform='linux']) .detailsCol {
+  padding-top: var(--dsh-desktop-titlebar-inset, 44px);
+  box-sizing: border-box;
 }
 
 /* The details subtree stays mounted at zero width, so its border must not paint

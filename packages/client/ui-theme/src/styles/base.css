@@ -13,3 +13,32 @@
   --ds-transition-duration-fast: 0.1s;
   --ds-transition-duration-slow: 0.3s;
 }
+
+/* The Electron shell marks its document before showing the window. Native
+ * window materials need transparent page pixels; Linux keeps the ordinary
+ * solid Web surfaces because Electron supplies no equivalent material there. */
+html[data-dsh-desktop='true'] {
+  --dsh-desktop-titlebar-inset: 40px;
+}
+
+html[data-dsh-desktop-platform='darwin'],
+html[data-dsh-desktop-platform='win32'],
+html[data-dsh-desktop-platform='linux'] {
+  --dsh-desktop-titlebar-inset: 44px;
+}
+
+html[data-dsh-desktop-platform='darwin'],
+html[data-dsh-desktop-platform='darwin'] body,
+html[data-dsh-desktop-platform='darwin'] #root,
+html[data-dsh-desktop-platform='win32'],
+html[data-dsh-desktop-platform='win32'] body,
+html[data-dsh-desktop-platform='win32'] #root {
+  background: transparent;
+}
+
+/* Electron drag regions ignore visual stacking. Suspend every renderer-owned
+ * drag target while a modal is mounted so its mask and controls retain pointer
+ * input; removing the final modal restores the platform-specific regions. */
+html[data-dsh-desktop='true']:has([aria-modal='true']) body * {
+  -webkit-app-region: no-drag;
+}

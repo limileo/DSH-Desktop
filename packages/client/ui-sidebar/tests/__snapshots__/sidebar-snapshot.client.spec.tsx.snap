@@ -10,6 +10,11 @@ exports[`sidebar shell snapshots > renders the collapsed rail after the crossfad
     style=""
   >
     <div
+      aria-hidden="true"
+      class="titlebarDragRegion"
+      data-desktop-titlebar-drag="true"
+    />
+    <div
       class="logoRow"
     >
       <button
@@ -92,6 +97,11 @@ exports[`sidebar shell snapshots > renders the expanded column (wordmark, capsul
     class="root quietBars"
     style="width: 300px;"
   >
+    <div
+      aria-hidden="true"
+      class="titlebarDragRegion"
+      data-desktop-titlebar-drag="true"
+    />
     <div
       class="logoRow"
     >
@@ -185,6 +195,11 @@ exports[`sidebar shell snapshots > renders the expanded column in the default lo
     class="root quietBars"
     style="width: 300px;"
   >
+    <div
+      aria-hidden="true"
+      class="titlebarDragRegion"
+      data-desktop-titlebar-drag="true"
+    />
     <div
       class="logoRow"
     >

@@ -29,7 +29,7 @@ describe('ThemeRuntime', () => {
     // jsdom matchMedia is absent; system resolves to light.
     expect(snapshot.active.id).toBe('light')
     expect(snapshot.active.colorScheme).toBe('light')
-    expect(snapshot.themes.map(t => t.id)).toEqual(['light', 'dark'])
+    expect(snapshot.themes.map(t => t.id)).toEqual(['light', 'dark', 'wechat', 'light-texture'])
   })
 
   it('setTheme switches, writes through the scope, republishes, and keeps DOM untouched', () => {
@@ -46,6 +46,22 @@ describe('ThemeRuntime', () => {
     theme.setTheme('dark')
     expect(events).toHaveLength(1)
     expect(host.set).toHaveBeenCalledOnce()
+  })
+
+  it('persists and resolves the built-in WeChat style against the light palette', () => {
+    const { theme, host } = make()
+    theme.setTheme('wechat')
+    expect(theme.getTheme().preference).toBe('wechat')
+    expect(theme.getTheme().active).toMatchObject({ id: 'wechat', colorScheme: 'light' })
+    expect(host.set).toHaveBeenCalledWith('preference', 'wechat')
+  })
+
+  it('persists and resolves Light Texture as a distinct light presentation', () => {
+    const { theme, host } = make()
+    theme.setTheme('light-texture')
+    expect(theme.getTheme().preference).toBe('light-texture')
+    expect(theme.getTheme().active).toMatchObject({ id: 'light-texture', colorScheme: 'light' })
+    expect(host.set).toHaveBeenCalledWith('preference', 'light-texture')
   })
 
   it('adopts a published Host section without writing it back', () => {
@@ -75,12 +91,12 @@ describe('ThemeRuntime', () => {
   it('registered themes join the snapshot; disposing the active one resets to default', () => {
     const { theme, events, host } = make()
     const dispose = theme.register({ id: 'sepia', colorScheme: 'light', tokens: { '--dsw-alias-bg-base': 'red' } })
-    expect(theme.getTheme().themes.map(t => t.id)).toEqual(['light', 'dark', 'sepia'])
+    expect(theme.getTheme().themes.map(t => t.id)).toEqual(['light', 'dark', 'wechat', 'light-texture', 'sepia'])
     theme.setTheme('sepia')
     expect(theme.getTheme().active.tokens['--dsw-alias-bg-base']).toBe('red')
     dispose()
     expect(theme.getTheme().preference).toBe('system')
-    expect(theme.getTheme().themes.map(t => t.id)).toEqual(['light', 'dark'])
+    expect(theme.getTheme().themes.map(t => t.id)).toEqual(['light', 'dark', 'wechat', 'light-texture'])
     // Custom ids are in-process extension themes; only the built-in product
     // preferences cross the Host settings schema.
     expect(host.set).not.toHaveBeenCalled()

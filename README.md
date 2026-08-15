@@ -1,57 +1,73 @@
-# DeepSeek Harness
+# DSH Desktop
 
 English | [中文](README.zh.md)
 
-DeepSeek Harness (`dsh`) is an open-source agent harness developed by [DeepSeek AI](https://deepseek.com).
+A ready-to-use desktop edition of the official [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness). Install and launch it without separately installing Node.js, running commands, or configuring a runtime.
 
-It uses an architecture where **everything is a plugin**, and is powered by [Cordis](https://github.com/cordiverse/cordis), whose design is described in [_A Programming Paradigm for Spatiotemporal Composability_](https://github.com/cordiverse/paper).
+> DSH Desktop is an unofficial community project. It is not an official DeepSeek product or distribution channel.
 
-## Developer preview
+## Download and install
 
-DeepSeek Harness is currently in _developer preview_ and is iterating rapidly. **THERE WILL BE COMPATIBILITY-BREAKING CHANGES.**
+Download the latest version from this repository's [GitHub Releases](https://github.com/limileo/DSH-Desktop/releases).
 
-## Run
+| Platform | Installer | Availability |
+| --- | --- | --- |
+| macOS Apple Silicon | `DSH-Desktop-macOS-arm64-*.dmg` | Supported |
+| Windows x64 | `DSH-Desktop-Windows-x64-Setup-*.exe` | Supported |
+| macOS Intel | — | Planned |
 
-### Run from `npm`
+On macOS, open the DMG and drag `DSH Desktop` to `Applications`. The community build is not signed with an Apple Developer ID; if Gatekeeper blocks the first launch, right-click the app in Finder and choose **Open**.
 
-Install `Node.js`, then run:
+On Windows, run the Setup executable and follow the installer. The community build does not use a purchased code-signing certificate, so SmartScreen may show an unknown-publisher warning; choose **More info** to continue.
 
-```sh
-npx @deepseek-ai/dsh web
-```
+These are operating-system signing warnings. The installer still contains the complete runtime and does not require separate dependencies.
 
-The command starts the Web UI, served at `http://127.0.0.1:3080` by default. See [Web UI guide](docs/user/guide/index.md).
+## Preview
 
-### Run from source
+<p align="center">
+  <img src="assets/dsh-desktop-preview.png" alt="DSH Desktop preview" width="100%">
+</p>
 
-To run from a repository checkout:
+## Desktop features
 
-```sh
-git clone https://github.com/deepseek-ai/deepseek-harness.git
-cd deepseek-harness
-pnpm install
-pnpm run build
-pnpm dsh web
-```
+- Bundles the official Harness Host, Web UI, and runtime dependencies
+- Starts and supervises the local Host without a command line
+- Keeps the Host alive in the system tray when the window is closed
+- Keeps sessions and services local
+- Opens external pages in the system browser and restricts in-app navigation
+- Includes native, dark, Soft Chat, and Light Texture themes
+- Adapts window chrome, rounded surfaces, and sidebar layout for macOS and Windows
+- Validates both the macOS DMG and Windows NSIS installer through real install-and-launch smoke tests
 
-## Community and support
+## Relationship to the official project
 
-- Feel free to submit feedback or bug reports through [GitHub Discussions](https://github.com/deepseek-ai/deepseek-harness/discussions).
-- Add the [`dsh-plugin`](https://github.com/topics/dsh-plugin) topic to your plugin repository for discoverability.
-- Join <a href="https://discord.gg/Ycq5dCaS4">DeepSeek Harness Discord community</a>.
+Harness core behavior, plugins, agent capabilities, and the Web UI come from [deepseek-ai/deepseek-harness](https://github.com/deepseek-ai/deepseek-harness). This repository maintains the desktop carrier, theme adaptations, installers, and cross-platform validation on top of that source.
 
-## Contributing
+`.github/workflows/desktop-portable.yml` builds installers on native macOS and Windows runners. Scheduled and manual builds first attempt to merge the official `master`; conflicts fail explicitly instead of distributing an unverified automatic merge.
 
-See [CONTRIBUTING.md](CONTRIBUTING.md).
+Installed applications do not currently replace their own program files in the background. New versions are published through GitHub Releases for users to install when desired. This avoids app-store distribution but does not bypass macOS or Windows security requirements for unsigned software.
 
 ## Development
 
-Start with the [development guide](docs/development.md) and [architecture documentation](docs/architecture.md).
+Node.js 22.23.2 and pnpm are required. The desktop entry lives in `apps/desktop`.
 
-For agents, follow [AGENTS.md](AGENTS.md).
+```sh
+pnpm install
+pnpm run dev:desktop
+```
+
+Build the unsigned installer for the current operating system:
+
+```sh
+pnpm run dist:desktop:unsigned
+```
+
+This creates a DMG on macOS and an NSIS Setup EXE on Windows. See [`apps/desktop/README.md`](apps/desktop/README.md) for architecture and signed-release details.
+
+## Contributing
+
+Use [Issues](https://github.com/limileo/DSH-Desktop/issues) for desktop-specific problems and Pull Requests for improvements. For Harness core behavior and plugin development, also consult the official project's contribution guide.
 
 ## License
 
-[MIT](LICENSE)
-
-Third-party dependencies and their licenses are disclosed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+[MIT](LICENSE). The original copyright notice remains intact; see [NOTICE](NOTICE) for the desktop modifications. Third-party dependency notices are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

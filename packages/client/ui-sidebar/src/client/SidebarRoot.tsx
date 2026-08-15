@@ -127,6 +127,7 @@ export function SidebarRoot({
       }}
       onPointerLeave={() => { armLinger() }}
     >
+      <div className={css.titlebarDragRegion} data-desktop-titlebar-drag aria-hidden="true" />
       <div className={css.logoRow}>
         {/* Expanded, the wordmark doubles as a New Session shortcut; the
             collapsed rail's logo is the expand toggle below instead. */}

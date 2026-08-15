@@ -39,6 +39,12 @@
   - button "跟随系统" [pressed]:
     - img
     - text: 跟随系统
+  - button "微语主题":
+    - img
+    - text: 微语主题
+  - button "轻质感":
+    - img
+    - text: 轻质感
   - text: 繁忙时 Enter 键行为 仅在智能体运行时生效；Cmd/Ctrl+Enter 使用另一行为
   - button "排队发送":
     - text: 排队发送

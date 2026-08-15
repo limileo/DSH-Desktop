@@ -391,6 +391,7 @@ describe('Modal', () => {
       </Modal>)
     const dialog = screen.getByRole('dialog', { name: 'Create new workspace' })
     expect(dialog).toBeDefined()
+    expect(dialog.getAttribute('aria-modal')).toBe('true')
     // The full-page layer escapes caller stacking contexts but remains in
     // this document/current WebUI window.
     expect(dialog.parentElement?.parentElement).toBe(document.body)

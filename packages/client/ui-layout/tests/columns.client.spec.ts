@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
   CENTER_MIN, clampWidth, computeColumns,
-  DETAILS_DEFAULT, DETAILS_MIN, SIDEBAR_COLLAPSED, SIDEBAR_DEFAULT, SIDEBAR_MIN,
+  DETAILS_DEFAULT, DETAILS_MIN, SIDEBAR_COLLAPSED, SIDEBAR_COLLAPSED_MACOS,
+  SIDEBAR_DEFAULT, SIDEBAR_MIN,
 } from '@deepseek-ai/dsh-client-ui-layout/src/client/columns.ts'
 
 // Numeric preference form (0 = closed); helpers keep the scenario names readable.
@@ -25,6 +26,16 @@ describe('computeColumns', () => {
   it('closed sidebar keeps its compact rail while closed details contribute zero width', () => {
     expect(computeColumns(1920, closed(300), closed(360)))
       .toEqual({ sidebar: SIDEBAR_COLLAPSED, center: 1920 - SIDEBAR_COLLAPSED, details: 0 })
+  })
+
+  it('uses the carrier-selected compact rail in the full concession solve', () => {
+    expect(SIDEBAR_COLLAPSED_MACOS).toBe(90)
+    expect(computeColumns(1920, closed(300), closed(360), SIDEBAR_COLLAPSED_MACOS))
+      .toEqual({
+        sidebar: SIDEBAR_COLLAPSED_MACOS,
+        center: 1920 - SIDEBAR_COLLAPSED_MACOS,
+        details: 0,
+      })
   })
 
   it('preferences beyond the clamp range are clamped before solving', () => {

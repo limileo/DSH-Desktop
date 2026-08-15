@@ -5,8 +5,10 @@
   height: 32px;
   padding: 0 8px;
   border: 1px solid var(--dsw-alias-border-l2);
-  border-radius: 8px;
+  border-radius: var(--dsw-specific-input-control-radius, 8px);
   background: var(--dsw-alias-bg-layer-1);
+  box-shadow: var(--dsw-specific-input-control-shadow, none);
+  backdrop-filter: var(--dsw-specific-control-backdrop, none);
 }
 
 .wrap:focus-within {

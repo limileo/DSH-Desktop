@@ -8,12 +8,26 @@
 
 .root {
   --dsh-sidebar-inline-padding: 12px;
+  --dsh-sidebar-collapsed-width: 56px;
+  --dsh-sidebar-rail-inline-padding: 10px;
+  position: relative;
   display: flex;
   flex-direction: column;
-  height: 100%;
+  height: calc(100% - var(--dsw-specific-sidebar-shell-height-adjust, 0px));
+  max-width: calc(100% - var(--dsw-specific-sidebar-shell-width-adjust, 0px));
+  margin: var(--dsw-specific-sidebar-shell-margin, 0);
   padding: 6px var(--dsh-sidebar-inline-padding);
   box-sizing: border-box;
   background: var(--dsw-specific-sidebar-fill);
+  border: var(--dsw-specific-sidebar-shell-border, 0 solid transparent);
+  border-inline-end: var(
+    --dsw-specific-sidebar-shell-border-inline-end,
+    var(--dsw-specific-sidebar-shell-border, 0 solid transparent)
+  );
+  border-radius: var(--dsw-specific-sidebar-shell-radius, 0);
+  box-shadow: var(--dsw-specific-sidebar-shell-shadow, none);
+  backdrop-filter: var(--dsw-specific-sidebar-backdrop, none);
+  overflow: hidden;
   color: var(--dsw-alias-label-primary);
   font-size: 14px;
   /* The sidebar is elevated above the conversation surface, so a revealed
@@ -22,11 +36,75 @@
   --dsh-scrollbar-thumb-hover: var(--dsw-alias-scrollbar-hover-l2);
 }
 
+/* Web does not reserve title-bar space. The Electron marker reveals this
+   sidebar-owned strip and shifts the column below the frameless controls. */
+.titlebarDragRegion {
+  display: none;
+}
+
+:global(html[data-dsh-desktop='true']) .root {
+  padding-top: calc(6px + var(--dsh-desktop-titlebar-inset, 40px));
+}
+
+:global(html[data-dsh-desktop='true']) .titlebarDragRegion {
+  display: block;
+  position: absolute;
+  inset: 0 0 auto;
+  height: var(--dsh-desktop-titlebar-inset, 40px);
+  -webkit-app-region: drag;
+  user-select: none;
+}
+
+:global(html[data-dsh-desktop='true']) .root button,
+:global(html[data-dsh-desktop='true']) .root a,
+:global(html[data-dsh-desktop='true']) .root input,
+:global(html[data-dsh-desktop='true']) .root select,
+:global(html[data-dsh-desktop='true']) .root textarea,
+:global(html[data-dsh-desktop='true']) .root [role='button'] {
+  -webkit-app-region: no-drag;
+}
+
+:global(html[data-dsh-desktop-platform='darwin']) .root {
+  --dsh-sidebar-collapsed-width: 90px;
+  --dsh-sidebar-rail-inline-padding: 27px;
+  padding-top: 32px;
+  background: var(--dsw-specific-sidebar-native-fill, transparent);
+}
+
+:global(html[data-dsh-desktop-platform='win32']) .root {
+  padding-top: 6px;
+  background: var(--dsw-specific-sidebar-native-fill, transparent);
+}
+
+:global(html[data-dsh-desktop-platform='win32']) .titlebarDragRegion {
+  display: none;
+}
+
 /* Rail geometry (figma rail spec): 36x36 control boxes centered in the 56px
    rail (10px side padding), 12px vertical rhythm, 18px from the rail top to
    the whale's box (24px to the 24-wide whale glyph itself). */
 .root.collapsed {
-  padding: 18px 10px 6px;
+  align-items: center;
+  padding: 18px 0 6px;
+}
+
+:global(html[data-dsh-desktop='true']) .root.collapsed {
+  padding-top: calc(18px + var(--dsh-desktop-titlebar-inset, 40px));
+}
+
+:global(html[data-dsh-desktop-platform='win32']) .root.collapsed {
+  padding-top: 18px;
+}
+
+/* The traffic lights end near x=72/y=32. The expanded 60px logo row places
+   its 28px toggle at y=48; the collapsed rail starts its 36px controls at the
+   same y-coordinate. The separate drag strip ends at y=32. */
+:global(html[data-dsh-desktop-platform='darwin']) .root.collapsed {
+  padding-top: 48px;
+}
+
+:global(html[data-dsh-desktop-platform='darwin']) .titlebarDragRegion {
+  height: 32px;
 }
 
 /* Scrollbars in the column are a pointer affordance: the shell adds this
@@ -76,7 +154,9 @@
 @keyframes rail-in {
   from {
     opacity: 0;
-    transform: translateX(49px);
+    transform: translateX(calc(
+      var(--dsh-sidebar-collapsed-width) - var(--dsh-sidebar-rail-inline-padding) + 3px
+    ));
   }
 }
 
@@ -101,10 +181,11 @@
 }
 
 .collapsed .logoRow {
+  width: 36px;
   height: 36px;
   padding: 0;
   margin-bottom: 12px;
-  justify-content: flex-start;
+  justify-content: center;
 }
 
 /* Brand group (figma I133:7632): the full wordmark rides the text ink
@@ -122,6 +203,13 @@
   background: transparent;
   color: inherit;
   cursor: pointer;
+}
+
+.brand:focus-visible,
+.iconButton:focus-visible,
+.newSession:focus-visible {
+  outline: 2px solid var(--dsw-alias-state-business-primary);
+  outline-offset: 2px;
 }
 
 .iconButton {
@@ -181,10 +269,12 @@
   padding: 8px 16px;
   margin: 0 2px 8px;
   box-sizing: border-box;
-  border: 1px solid var(--dsw-alias-border-l2);
-  border-radius: 12px;
-  background: var(--dsw-alias-button-elevated-fill);
-  color: var(--dsw-alias-label-primary);
+  border: 1px solid var(--dsw-specific-new-session-border, var(--dsw-alias-border-l2));
+  border-radius: var(--dsw-specific-new-session-radius, 12px);
+  background: var(--dsw-specific-new-session-fill, var(--dsw-alias-button-elevated-fill));
+  box-shadow: var(--dsw-specific-new-session-shadow, none);
+  backdrop-filter: var(--dsw-specific-new-session-backdrop, none);
+  color: var(--dsw-specific-new-session-label, var(--dsw-alias-label-primary));
   font-size: 14px;
   font-weight: 500;
   line-height: 22px;
@@ -193,11 +283,11 @@
 }
 
 .newSession:hover {
-  background: var(--dsw-alias-button-floating-hover);
+  background: var(--dsw-specific-new-session-hover, var(--dsw-alias-button-floating-hover));
 }
 
 .collapsed .newSession {
-  align-self: flex-start;
+  align-self: center;
   width: 36px;
   height: 36px;
   padding: 0;
@@ -236,6 +326,8 @@
 }
 
 .collapsed .regionArea {
+  align-self: center;
+  width: 36px;
   margin-left: 0;
   margin-right: 0;
   padding-left: 0;
@@ -261,6 +353,7 @@
 }
 
 .collapsed .footArea {
+  width: 36px;
   align-items: center;
 }
 

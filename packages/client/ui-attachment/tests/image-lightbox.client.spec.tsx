@@ -15,6 +15,7 @@ describe('ImageLightbox', () => {
     opener.focus()
     const onClose = vi.fn()
     const view = render(<ImageLightbox src="blob:original" alt="原图" labels={labels} onClose={onClose} />)
+    expect(view.getByRole('dialog').getAttribute('aria-modal')).toBe('true')
     const close = view.getByRole('button', { name: '关闭原图预览' })
     expect(document.activeElement).toBe(close)
     fireEvent.keyDown(window, { key: 'a' })

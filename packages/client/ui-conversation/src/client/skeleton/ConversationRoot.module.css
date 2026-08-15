@@ -4,11 +4,23 @@
    a 2px active bar. */
 
 .root {
+  position: relative;
   display: flex;
   flex-direction: column;
-  height: 100%;
+  height: calc(100% - var(--dsw-specific-conversation-shell-height-adjust, 0px));
+  margin: var(--dsw-specific-conversation-shell-margin, 0);
   min-width: 0;
-  background: var(--dsw-alias-bg-base);
+  background: var(--dsw-specific-conversation-fill, var(--dsw-alias-bg-base));
+  border: var(--dsw-specific-conversation-shell-border, 0 solid transparent);
+  border-inline-start: var(
+    --dsw-specific-conversation-shell-border-inline-start,
+    var(--dsw-specific-conversation-shell-border, 0 solid transparent)
+  );
+  border-radius: var(--dsw-specific-conversation-shell-radius, 0);
+  box-shadow: var(--dsw-specific-conversation-shell-shadow, none);
+  backdrop-filter: var(--dsw-specific-conversation-backdrop, none);
+  box-sizing: border-box;
+  overflow: hidden;
 
   /* Shared width axis for the whole column: one content width W
      (--dsh-chat-content-width) for the transcript, the dock cards
@@ -25,11 +37,56 @@
   --dsh-composer-dock-inset: 8px;
 }
 
+:global(html[data-dsh-desktop-platform='win32']) .root {
+  --dsh-windows-caption-controls-width: 138px;
+}
+
+.desktopTitlebarDragRegion {
+  display: none;
+}
+
+:global(html[data-dsh-desktop='true']) .desktopTitlebarDragRegion {
+  display: block;
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 1;
+  height: var(--dsh-desktop-titlebar-inset, 40px);
+  -webkit-app-region: drag;
+  user-select: none;
+}
+
+:global(html[data-dsh-desktop-platform='win32']) .desktopTitlebarDragRegion {
+  right: var(--dsh-windows-caption-controls-width);
+}
+
 .header {
   position: relative;
+  z-index: 2;
   flex: none;
   padding: 12px 28px 0 20px;
   border-bottom: 1px solid transparent;
+  background: var(--dsw-specific-conversation-header-fill, transparent);
+}
+
+:global(html[data-dsh-desktop='true']) .header {
+  -webkit-app-region: drag;
+}
+
+:global(html[data-dsh-desktop-platform='win32']) .header {
+  padding: 0 0 0 20px;
+  -webkit-app-region: no-drag;
+}
+
+:global(html[data-dsh-desktop='true']) .header button:not(:disabled),
+:global(html[data-dsh-desktop='true']) .header a,
+:global(html[data-dsh-desktop='true']) .header input,
+:global(html[data-dsh-desktop='true']) .header select,
+:global(html[data-dsh-desktop='true']) .header textarea,
+:global(html[data-dsh-desktop='true']) .header [role='button'],
+:global(html[data-dsh-desktop='true']) .header [role='link'],
+:global(html[data-dsh-desktop='true']) .header [role='tab'],
+:global(html[data-dsh-desktop='true']) .header [contenteditable='true'] {
+  -webkit-app-region: no-drag;
 }
 
 .header::after {
@@ -55,6 +112,13 @@
   align-items: center;
   gap: 0;
   min-height: 32px;
+}
+
+:global(html[data-dsh-desktop-platform='win32']) .titleRow {
+  min-height: var(--dsh-desktop-titlebar-inset, 44px);
+  padding-right: calc(var(--dsh-windows-caption-controls-width) + 20px);
+  box-sizing: border-box;
+  -webkit-app-region: drag;
 }
 
 .titleCluster {
@@ -137,15 +201,16 @@
   position: relative;
   z-index: 1;
   display: flex;
-  gap: 36px;
+  gap: var(--dsw-specific-tab-gap, 36px);
   margin-top: 4px;
   padding-left: 8px;
+  padding-bottom: var(--dsw-specific-tab-strip-padding-bottom, 0);
 }
 
 /* figma .Tab 34:11442: 13/16 text (figma wt510, rendered 500), gap 8 to the 2px bar. */
 .tab {
   position: relative;
-  padding: 0 0 11px;
+  padding: var(--dsw-specific-tab-padding, 0 0 11px);
   border: none;
   background: transparent;
   font-size: 13px;
@@ -153,6 +218,11 @@
   font-weight: 500;
   color: var(--dsw-alias-label-tertiary);
   cursor: pointer;
+  border-radius: var(--dsw-specific-tab-radius, 0);
+  transition:
+    color 160ms ease,
+    background 160ms ease,
+    box-shadow 160ms ease;
 }
 
 .tab::after {
@@ -161,7 +231,7 @@
   right: 0;
   bottom: 1px;
   left: 0;
-  height: 2px;
+  height: var(--dsw-specific-tab-indicator-height, 2px);
   border-radius: 2px;
   background: transparent;
 }
@@ -171,6 +241,8 @@
    nearest semantic token that stays blue in both themes. */
 .tabActive {
   color: var(--dsw-alias-state-business-primary);
+  background: var(--dsw-specific-tab-active-fill, transparent);
+  box-shadow: var(--dsw-specific-tab-active-shadow, none);
 }
 
 .tabActive::after {
@@ -338,6 +410,8 @@
   aspect-ratio: 1051 / 468;
   transform: translate(-50%, 50%);
   pointer-events: none;
+  opacity: var(--dsw-specific-hero-glow-opacity, 1);
+  filter: var(--dsw-specific-hero-glow-filter, none);
 }
 
 .heroWorkspaceRow {

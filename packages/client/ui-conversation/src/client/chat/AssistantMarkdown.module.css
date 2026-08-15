@@ -9,6 +9,13 @@
   font-size: 16px;
   line-height: 28px;
   color: var(--dsw-alias-label-primary);
+  box-sizing: border-box;
+  padding: var(--dsw-specific-assistant-padding, 0);
+  border: var(--dsw-specific-assistant-border, 0 solid transparent);
+  border-radius: var(--dsw-specific-assistant-radius, 0);
+  background: var(--dsw-specific-assistant-fill, transparent);
+  box-shadow: var(--dsw-specific-assistant-shadow, none);
+  backdrop-filter: var(--dsw-specific-assistant-backdrop, none);
 }
 
 .body {

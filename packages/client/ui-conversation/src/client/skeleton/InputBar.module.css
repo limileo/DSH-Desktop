@@ -59,17 +59,18 @@
   flex-direction: column;
   /* figma Input 75:8208: 12px between the text area and the button row; 10px
      top pad on the card before .InputText. */
-  gap: 12px;
+  gap: var(--dsw-specific-input-gap, 12px);
   width: 100%;
   max-width: var(--dsh-composer-card-max-width);
-  padding-top: 10px;
+  padding-top: var(--dsw-specific-input-padding-top, 10px);
   /* Input stroke: black/0.10 light, white/0.06 dark (figma darkmode note says
      the input border is one notch weaker than buttons) — exactly the
      l2-darkmode-thin pair. Fill: the input surface token (elevated in dark). */
-  border: 1px solid var(--dsw-alias-border-l2-darkmode-thin);
-  border-radius: 22px;
+  border: 1px solid var(--dsw-specific-input-border, var(--dsw-alias-border-l2-darkmode-thin));
+  border-radius: var(--dsw-specific-input-radius, 22px);
   background: var(--dsw-specific-input-major);
-  box-shadow: var(--dsw-shadow-lv2);
+  box-shadow: var(--dsw-specific-input-shadow, var(--dsw-shadow-lv2));
+  backdrop-filter: var(--dsw-specific-input-backdrop, none);
   font-size: 16px;
   line-height: 24px;
   /* Elevated surface in dark, same as the menus: the draft scrollport inside
@@ -96,7 +97,7 @@
   content: '';
   position: absolute;
   inset: -1px;
-  border-radius: 22px;
+  border-radius: inherit;
   background: var(--dsw-alias-border-l4);
   transition: background-color 100ms ease;
   -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='100%25' height='100%25' fill='none' rx='22' ry='22' stroke='black' stroke-width='2' stroke-dasharray='4 4'/%3E%3C/svg%3E");
@@ -290,7 +291,7 @@
   /* 2px moved from the bottom pad to the top: the whole control row sits 2px
      lower in the card (it read too high against the textarea) while the card
      height and the controls' own centering stay untouched. */
-  padding: 2px 8px 6px;
+  padding: var(--dsw-specific-input-row-padding, 2px 8px 6px);
   min-width: 0;
   /* Size container so the chips inside can collapse to icon-only when the
      card runs out of row width (PermissionSelect @container rule). Anonymous

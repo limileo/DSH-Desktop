@@ -1,8 +1,7 @@
-/* Ongoing blue has no alias token (state-business-primary is the 500 step,
- * not this 450) — component-level var pinned to the static scale instead. */
+/* Ongoing activity follows the current product theme's semantic accent. */
 .dot,
 .matrix {
-  --dsh-state-ongoing: var(--dsw-static-deepseek-450);
+  --dsh-state-ongoing: var(--dsw-alias-state-business-primary);
 }
 
 /* Solid states: same-color halo via a 0.10-opacity outer layer (::before)

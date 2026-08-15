@@ -7,6 +7,9 @@ packages:
   - native/landlock-run/packages/*
   # Product assemblies over the package tier; apps/cli owns the `dsh` bin.
   - apps/*
+  # Dependency-only deploy root for the packaged Electron Host. Its nested
+  # location keeps it outside application build and release-family scans.
+  - apps/desktop/runtime
   - website
   # The runnable demo leaves join as ONE workspace member: examples/package.json
   # declares the union of every leaf's cordis.yml plugins as workspace:*, so a
@@ -27,6 +30,9 @@ linkWorkspacePackages: true
 overrides:
   '@deepseek-ai/cosmokit': 'link:vendor/cosmokit'
   '@deepseek-ai/schemastery': 'link:vendor/schemastery'
+  # app-builder-lib 26.15.3 reads a cache-mode export introduced in 3.1.0,
+  # while its declared range still permits the incompatible 3.0.0 release.
+  'app-builder-lib@26.15.3>@electron/get': '3.1.0'
 
 peerDependencyRules:
   allowedVersions:
@@ -38,6 +44,8 @@ peerDependencyRules:
 # default and only allow scripts we need. esbuild (native binary) and lefthook
 # (git hooks) genuinely need theirs.
 allowBuilds:
+  # Downloads the platform Electron runtime used by desktop packaging.
+  electron: true
   esbuild: true
   lefthook: true
   # Cross-platform boundary for the persistent PTY backend, including ConPTY on Windows.
@@ -53,6 +61,9 @@ allowBuilds:
   # The Python runtime deploy includes the reviewed workspace postinstall that
   # restores the executable bit on node-pty's macOS spawn helper.
   '@deepseek-ai/dsh-subprocess-local@file:packages/subprocess/subprocess-local': true
+  # electron-builder resolves the optional Squirrel target even though this app
+  # does not select it. Its install script only copies a bundled 7-Zip binary.
+  electron-winstaller: false
 
 minimumReleaseAgeExclude:
   # Fresh pi-ai releases carry the model catalog updates that are the whole
@@ -69,4 +80,5 @@ minimumReleaseAgeExclude:
   - node-addon-require-builtin@0.1.4
 
 patchedDependencies:
+  app-builder-lib@26.15.3: patches/app-builder-lib@26.15.3.patch
   node-pty@1.1.0: patches/node-pty@1.1.0.patch

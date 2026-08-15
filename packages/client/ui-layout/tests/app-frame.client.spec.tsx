@@ -15,7 +15,10 @@ import { act, cleanup, render } from '@testing-library/react'
 import { useSyncExternalStore } from 'react'
 import { AppFrame } from '@deepseek-ai/dsh-client-ui-layout/src/client/AppFrame.tsx'
 import type { AppFrameProps } from '@deepseek-ai/dsh-client-ui-layout/src/client/AppFrame.tsx'
-import { SIDEBAR_COLLAPSED } from '@deepseek-ai/dsh-client-ui-layout/src/client/columns.ts'
+import {
+  SIDEBAR_COLLAPSED,
+  SIDEBAR_COLLAPSED_MACOS,
+} from '@deepseek-ai/dsh-client-ui-layout/src/client/columns.ts'
 import { createLayoutStore } from '@deepseek-ai/dsh-client-ui-layout/src/client/stores.ts'
 import type {
   SessionId, SessionListState, WorkspaceListState,
@@ -120,6 +123,8 @@ beforeEach(() => {
   vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => setTimeout(() => { cb(0) }, 16) as unknown as number)
   vi.stubGlobal('cancelAnimationFrame', (h: number) => { clearTimeout(h) })
   window.innerWidth = frameWidth
+  delete document.documentElement.dataset.dshDesktop
+  delete document.documentElement.dataset.dshDesktopPlatform
   Element.prototype.getBoundingClientRect = function () {
     return { width: frameWidth, height: 1080, top: 0, left: 0, right: frameWidth, bottom: 1080, x: 0, y: 0, toJSON: () => ({}) }
   }
@@ -259,6 +264,30 @@ describe('AppFrame', () => {
     expect(frame.hasAttribute('data-sidebar-collapsed')).toBe(true)
     const lastSidebarCall = slotCalls.filter(c => c.key === 'sidebar').at(-1)!
     expect(lastSidebarCall.props).toEqual({ collapsed: true, width: SIDEBAR_COLLAPSED })
+  })
+
+  it('keeps the macOS traffic lights inside the collapsed rail geometry', () => {
+    document.documentElement.dataset.dshDesktop = 'true'
+    document.documentElement.dataset.dshDesktopPlatform = 'darwin'
+    const { frame, instance, slotCalls } = mountFrame()
+    act(() => { instance.actions.toggleSidebar() })
+    expect(tracks(frame)).toEqual([SIDEBAR_COLLAPSED_MACOS, 0])
+    expect(slotCalls.filter(c => c.key === 'sidebar').at(-1)!.props).toEqual({
+      collapsed: true,
+      width: SIDEBAR_COLLAPSED_MACOS,
+    })
+  })
+
+  it.each(['win32', 'linux'])('keeps the %s collapsed rail at Web geometry', (platform) => {
+    document.documentElement.dataset.dshDesktop = 'true'
+    document.documentElement.dataset.dshDesktopPlatform = platform
+    const { frame, instance, slotCalls } = mountFrame()
+    act(() => { instance.actions.toggleSidebar() })
+    expect(tracks(frame)).toEqual([SIDEBAR_COLLAPSED, 0])
+    expect(slotCalls.filter(c => c.key === 'sidebar').at(-1)!.props).toEqual({
+      collapsed: true,
+      width: SIDEBAR_COLLAPSED,
+    })
   })
 
   it('viewport shrink triggers the concession chain via ResizeObserver', () => {

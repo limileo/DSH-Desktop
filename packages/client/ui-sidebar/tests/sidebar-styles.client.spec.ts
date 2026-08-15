@@ -26,6 +26,61 @@ function declarations(selector: string): Map<string, string> | undefined {
 }
 
 describe('SidebarRoot.module.css', () => {
+  it('keeps desktop drag and safe-area rules behind the shell marker', () => {
+    expect(declarations('.titlebarDragRegion')?.get('display')).toBe('none')
+    expect(
+      declarations(":global(html[data-dsh-desktop='true']) .titlebarDragRegion")?.get('-webkit-app-region'),
+    ).toBe('drag')
+    expect(
+      declarations(":global(html[data-dsh-desktop='true']) .root")?.get('padding-top'),
+    ).toBe('calc(6px + var(--dsh-desktop-titlebar-inset, 40px))')
+    expect(
+      declarations(":global(html[data-dsh-desktop='true']) .root button")?.get('-webkit-app-region'),
+    ).toBe('no-drag')
+  })
+
+  it('admits native material only on supported desktop platforms', () => {
+    expect(
+      declarations(":global(html[data-dsh-desktop-platform='darwin']) .root")?.get('background'),
+    ).toBe('var(--dsw-specific-sidebar-native-fill, transparent)')
+    expect(
+      declarations(":global(html[data-dsh-desktop-platform='win32']) .root")?.get('background'),
+    ).toBe('var(--dsw-specific-sidebar-native-fill, transparent)')
+    expect(css).not.toContain("data-dsh-desktop-platform='linux']) .root")
+  })
+
+  it('keeps Windows sidebar controls at their Web offsets without a drag strip', () => {
+    const expanded = declarations(":global(html[data-dsh-desktop-platform='win32']) .root")
+    const collapsed = declarations(":global(html[data-dsh-desktop-platform='win32']) .root.collapsed")
+    expect(expanded?.get('padding-top')).toBe('6px')
+    expect(collapsed?.get('padding-top')).toBe('18px')
+    expect(
+      declarations(":global(html[data-dsh-desktop-platform='win32']) .titlebarDragRegion")
+        ?.get('display'),
+    ).toBe('none')
+  })
+
+  it('places macOS sidebar content directly below the traffic lights', () => {
+    const expanded = declarations(":global(html[data-dsh-desktop-platform='darwin']) .root")
+    const collapsed = declarations(":global(html[data-dsh-desktop-platform='darwin']) .root.collapsed")
+    expect(expanded?.get('--dsh-sidebar-collapsed-width')).toBe('90px')
+    expect(expanded?.get('--dsh-sidebar-rail-inline-padding')).toBe('27px')
+    expect(expanded?.get('padding-top')).toBe('32px')
+    expect(collapsed?.get('padding-top')).toBe('48px')
+    expect(
+      declarations(":global(html[data-dsh-desktop-platform='darwin']) .titlebarDragRegion")
+        ?.get('height'),
+    ).toBe('32px')
+  })
+
+  it('keeps every shell control keyboard-visible', () => {
+    for (const selector of ['.brand:focus-visible', '.iconButton:focus-visible', '.newSession:focus-visible']) {
+      expect(declarations(selector)?.get('outline')).toBe(
+        '2px solid var(--dsw-alias-state-business-primary)',
+      )
+    }
+  })
+
   it('shares and cancels the wide shell trailing padding structurally', () => {
     const root = declarations('.root')
     expect(root?.get('--dsh-sidebar-inline-padding')).toBe('12px')
@@ -52,15 +107,27 @@ describe('SidebarRoot.module.css', () => {
     expect(declarations('.railIn .footArea')?.get('animation')).toBe(
       'rail-fade-in 150ms var(--ds-ease-in-out) backwards',
     )
-    expect(css).toMatch(
-      /@keyframes rail-in\s*\{\s*from\s*\{\s*opacity: 0;\s*transform: translateX\(49px\);\s*}\s*}/,
-    )
+    const railTranslation = [
+      '@keyframes rail-in',
+      'from',
+      'opacity: 0;',
+      'var(--dsh-sidebar-collapsed-width) - var(--dsh-sidebar-rail-inline-padding) + 3px',
+    ]
+    for (const text of railTranslation) expect(css).toContain(text)
     expect(css).toMatch(/@keyframes rail-fade-in\s*\{\s*from\s*\{\s*opacity: 0;\s*}\s*}/)
   })
 
   it('gives shell rail controls the same base anchor for their shared translation', () => {
-    expect(declarations('.collapsed .logoRow')?.get('justify-content')).toBe('flex-start')
-    expect(declarations('.collapsed .newSession')?.get('align-self')).toBe('flex-start')
+    expect(declarations('.logoRow')?.get('height')).toBe('60px')
+    expect(declarations('.root')?.get('--dsh-sidebar-rail-inline-padding')).toBe('10px')
+    expect(declarations('.root.collapsed')?.get('align-items')).toBe('center')
+    expect(declarations('.root.collapsed')?.get('padding')).toBe('18px 0 6px')
+    expect(declarations('.collapsed .logoRow')?.get('justify-content')).toBe('center')
+    expect(declarations('.collapsed .logoRow')?.get('width')).toBe('36px')
+    expect(declarations('.collapsed .newSession')?.get('align-self')).toBe('center')
     expect(declarations('.collapsed .newSession')?.get('width')).toBe('36px')
+    expect(declarations('.collapsed .regionArea')?.get('align-self')).toBe('center')
+    expect(declarations('.collapsed .regionArea')?.get('width')).toBe('36px')
+    expect(declarations('.collapsed .footArea')?.get('width')).toBe('36px')
   })
 })

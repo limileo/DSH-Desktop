@@ -98,10 +98,19 @@ describe('SettingsRoot trigger', () => {
 })
 
 describe('SettingsPanel chrome seats', () => {
+  it('portals the viewport overlay to document.body', () => {
+    const { view } = mount()
+    openPanel()
+    const dialog = screen.getByRole('dialog')
+    expect(dialog.parentElement?.parentElement).toBe(document.body)
+    expect(view.container.contains(dialog)).toBe(false)
+  })
+
   it('names the dialog via aria-labelledby pointing at the header seat node', () => {
     mount()
     openPanel()
     const dialog = screen.getByRole('dialog')
+    expect(dialog.getAttribute('aria-modal')).toBe('true')
     const titleId = dialog.getAttribute('aria-labelledby')!
     expect(titleId).toBeTruthy()
     const title = document.getElementById(titleId)!

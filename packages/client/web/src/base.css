@@ -1,9 +1,11 @@
 /* Shell-owned global base: full-height mount plus the theme token sheets.
- * The five ui-theme sheets are the sole token source (--dsw-*); the shell
+ * The seven ui-theme sheets are the sole token source (--dsw-*); the shell
  * links them here so tokens exist before any plugin CSS lands. scrollbar.css
  * follows design-platform.css because it reads that sheet's tokens. */
 @import '@deepseek-ai/dsh-client-ui-theme/styles/base.css';
 @import '@deepseek-ai/dsh-client-ui-theme/styles/design-platform.css';
+@import '@deepseek-ai/dsh-client-ui-theme/styles/wechat.css';
+@import '@deepseek-ai/dsh-client-ui-theme/styles/light-texture.css';
 @import '@deepseek-ai/dsh-client-ui-theme/styles/scrollbar.css';
 @import '@deepseek-ai/dsh-client-ui-theme/styles/gradient-shadow-text.css';
 @import '@deepseek-ai/dsh-client-ui-theme/styles/shiki.css';
@@ -22,7 +24,7 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   color: var(--dsw-alias-label-primary);
-  background: var(--dsw-alias-bg-base);
+  background: var(--dsw-specific-app-background, var(--dsw-alias-bg-base));
 }
 
 /* Form controls don't inherit the body font (UA sheets pin their families —

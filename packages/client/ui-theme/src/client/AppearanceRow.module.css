@@ -36,8 +36,9 @@
   gap: 4px;
   padding: 20px 32px;
   border: 1px solid var(--dsw-alias-border-l2);
-  border-radius: 16px;
-  background: transparent;
+  border-radius: var(--dsw-specific-theme-cube-radius, 16px);
+  background: var(--dsw-specific-theme-cube-fill, transparent);
+  box-shadow: var(--dsw-specific-theme-cube-shadow, none);
   font: inherit;
   font-size: 14px;
   line-height: 22px;
@@ -52,6 +53,6 @@
 /* Selected cube: #F5F6F7 fill + #ADB2B8 border (static token — the bluish-400
  * step has no alias-layer name). */
 .selected {
-  background: var(--dsw-alias-bg-module-platform);
-  border-color: var(--dsw-static-neutral-bluish-400);
+  background: var(--dsw-specific-theme-cube-selected-fill, var(--dsw-alias-bg-module-platform));
+  border-color: var(--dsw-specific-theme-cube-selected-border, var(--dsw-static-neutral-bluish-400));
 }

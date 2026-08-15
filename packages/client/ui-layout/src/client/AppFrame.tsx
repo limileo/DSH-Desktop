@@ -13,7 +13,13 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { PropsRenderSlots, PropsRuntime, PropsStore } from '@deepseek-ai/dsh-client-ui-slots'
-import { computeColumns, SIDEBAR_AUTO_COLLAPSE, SIDEBAR_DEFAULT } from './columns.ts'
+import {
+  computeColumns,
+  SIDEBAR_AUTO_COLLAPSE,
+  SIDEBAR_COLLAPSED,
+  SIDEBAR_COLLAPSED_MACOS,
+  SIDEBAR_DEFAULT,
+} from './columns.ts'
 import type { createLayoutStore } from './stores.ts'
 import css from './AppFrame.module.css'
 
@@ -139,7 +145,15 @@ export function AppFrame({
   const sidebarPreference = sidebarCollapsed
     ? 0
     : panels.sidebar === 0 ? SIDEBAR_DEFAULT : panels.sidebar
-  const cols = computeColumns(viewport, sidebarPreference, detailsSession === undefined ? 0 : panels.details)
+  const collapsedSidebar = document.documentElement.dataset.dshDesktopPlatform === 'darwin'
+    ? SIDEBAR_COLLAPSED_MACOS
+    : SIDEBAR_COLLAPSED
+  const cols = computeColumns(
+    viewport,
+    sidebarPreference,
+    detailsSession === undefined ? 0 : panels.details,
+    collapsedSidebar,
+  )
   const colsRef = useRef(cols)
   colsRef.current = cols
 

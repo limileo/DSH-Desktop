@@ -7,7 +7,9 @@
  * preference (or the collapsed rail), and center absorbs any remaining
  * deficit as the last resort. Inputs are the layout store's plain width
  * preferences (0 = closed); a closed sidebar resolves to the fixed
- * SIDEBAR_COLLAPSED control rail while closed details resolve to zero width.
+ * carrier-selected compact control rail while closed details resolve to zero
+ * width. The browser uses SIDEBAR_COLLAPSED; the macOS desktop carrier passes
+ * SIDEBAR_COLLAPSED_MACOS so its native traffic-light group fits in the rail.
  * The SIDEBAR_AUTO_COLLAPSE breakpoint is consumed by AppFrame, which decides
  * the effective sidebar preference before solving; the solver itself stays
  * breakpoint-free.
@@ -27,6 +29,8 @@ export const SIDEBAR_MAX = 420
 export const SIDEBAR_DEFAULT = 280
 /** Closed-sidebar rail: a 24px icon column between 16px horizontal paddings. */
 export const SIDEBAR_COLLAPSED = 56
+/** macOS desktop rail: clears the native traffic-light group and its trailing inset. */
+export const SIDEBAR_COLLAPSED_MACOS = 90
 /** Viewport width below which the sidebar auto-collapses to the rail (deepsuite
  * LG breakpoint); a manual toggle below it re-expands over the squeezed center
  * (stores.ts narrowExpanded). */
@@ -57,11 +61,17 @@ export function clampWidth(px: number, min: number, max: number): number {
  * @param viewport - available frame width in px.
  * @param sidebar - sidebar width preference in px (0 = closed).
  * @param details - details width preference in px (0 = closed).
+ * @param collapsedSidebar - carrier-selected compact rail width in px.
  * @returns resolved widths; details 0 means visually closed (never unmounted), while a closed sidebar keeps its compact rail.
  */
-export function computeColumns(viewport: number, sidebar: number, details: number): Columns {
+export function computeColumns(
+  viewport: number,
+  sidebar: number,
+  details: number,
+  collapsedSidebar: number = SIDEBAR_COLLAPSED,
+): Columns {
   // The sidebar is fixed at its preference (or the rail) — it never concedes.
-  const s = sidebar === 0 ? SIDEBAR_COLLAPSED : clampWidth(sidebar, SIDEBAR_MIN, SIDEBAR_MAX)
+  const s = sidebar === 0 ? collapsedSidebar : clampWidth(sidebar, SIDEBAR_MIN, SIDEBAR_MAX)
   const d0 = details === 0 ? 0 : clampWidth(details, DETAILS_MIN, DETAILS_MAX)
 
   // Step 1: everything fits at preferred widths.

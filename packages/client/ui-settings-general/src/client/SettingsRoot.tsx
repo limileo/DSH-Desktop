@@ -11,6 +11,7 @@
  * to the step, so a mounted-but-deciding step paints nothing here.
  */
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import clsx from 'clsx'
 import {
   IconAgentPresetOutline16, IconCloseOutline16, IconDataOutline16,
@@ -150,7 +151,7 @@ export function SettingsRoot(props: SettingsRootComponentProps) {
       >
         {renderSlot('settings.trigger', { wide })}
       </button>
-      {open && (
+      {open && createPortal((
         <SettingsPanel
           rows={rows}
           renderSlot={renderSlot}
@@ -158,7 +159,7 @@ export function SettingsRoot(props: SettingsRootComponentProps) {
           onSelect={setActiveId}
           onClose={close}
         />
-      )}
+      ), document.body)}
       {/* Dialog chrome and `#root` inert ownership live inside each step's
           visible branch. A step still deciding (private facts loading)
           renders null, so nothing paints or blocks while it decides. */}

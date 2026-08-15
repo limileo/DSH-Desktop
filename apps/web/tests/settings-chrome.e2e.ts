@@ -244,6 +244,7 @@ describe('web e2e: settings modal and General preferences', () => {
     interface ThemeState {
       attr: boolean
       background: string
+      theme: string | null
       /** Pre-migration localStorage key; the Host-backed world never writes it. */
       legacy: string | null
       themeColor: string | null
@@ -256,6 +257,7 @@ describe('web e2e: settings modal and General preferences', () => {
       return {
         attr: document.body.hasAttribute('data-ds-dark-theme'),
         background: computed.backgroundColor,
+        theme: document.body.getAttribute('data-ds-theme'),
         legacy: localStorage.getItem('dsh.theme'),
         themeColor: metas[0]?.content ?? null,
         themeColorCount: metas.length,
@@ -340,6 +342,20 @@ describe('web e2e: settings modal and General preferences', () => {
     await page.getByRole('dialog', { name: '设置' }).getByRole('button', { name: '浅色' }).click()
     await expect.poll(async () => (await readState()).attr, { timeout: 5_000 }).toBe(false)
     expectThemeColorSynchronized(await readState())
+    const wechatCube = page.getByRole('dialog', { name: '设置' }).getByRole('button', { name: '微语主题' })
+    await wechatCube.click()
+    await expect.poll(() => wechatCube.getAttribute('aria-pressed'), { timeout: 5_000 }).toBe('true')
+    await expect.poll(async () => (await readState()).theme, { timeout: 5_000 }).toBe('wechat')
+    await expect.poll(async () => readFile(join(scaffold.harnessHome, 'settings.yaml'), 'utf8'), { timeout: 5_000 })
+      .toMatch(/ui-theme:\n\s+preference: wechat/)
+    const lightTextureCube = page.getByRole('dialog', { name: '设置' }).getByRole('button', { name: '轻质感' })
+    await lightTextureCube.click()
+    await expect.poll(() => lightTextureCube.getAttribute('aria-pressed'), { timeout: 5_000 }).toBe('true')
+    await expect.poll(async () => (await readState()).theme, { timeout: 5_000 }).toBe('light-texture')
+    await expect.poll(async () => readFile(join(scaffold.harnessHome, 'settings.yaml'), 'utf8'), { timeout: 5_000 })
+      .toMatch(/ui-theme:\n\s+preference: light-texture/)
+    await page.getByRole('dialog', { name: '设置' }).getByRole('button', { name: '浅色' }).click()
+    await expect.poll(async () => (await readState()).theme, { timeout: 5_000 }).toBe('light')
     await page.keyboard.press('Escape')
     expect(tripwire.pageErrors).toEqual([])
   }, 90_000)

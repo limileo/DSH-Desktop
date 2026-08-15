@@ -8,11 +8,12 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  border-radius: 8px;
+  border-radius: var(--dsw-specific-sidebar-row-radius, 8px);
   padding: 0 8px;
   cursor: pointer;
   user-select: none;
   color: var(--dsw-alias-label-primary);
+  box-sizing: border-box;
 }
 
 .projectRow:hover,
@@ -21,7 +22,8 @@
 }
 
 .sessionRow.selected {
-  background: var(--dsw-alias-interactive-bg-hover);
+  background: var(--dsw-specific-sidebar-nav-item-active);
+  box-shadow: var(--dsw-specific-sidebar-selected-shadow, none);
 }
 
 .searchResultRow {
@@ -45,7 +47,8 @@
 }
 
 .searchResultRow.selected {
-  background: var(--dsw-alias-interactive-bg-hover);
+  background: var(--dsw-specific-sidebar-nav-item-active);
+  box-shadow: var(--dsw-specific-sidebar-selected-shadow, none);
 }
 
 .searchResultHeading {

@@ -74,6 +74,13 @@ function mountShell({ collapsed = false, width = 300 }: { collapsed?: boolean; w
 }
 
 describe('SidebarRoot shell', () => {
+  it('renders a non-interactive desktop title-bar drag seat', () => {
+    mountShell()
+    const dragRegion = document.querySelector('[data-desktop-titlebar-drag]')
+    expect(dragRegion).toBeTruthy()
+    expect(dragRegion?.getAttribute('aria-hidden')).toBe('true')
+  })
+
   it('routes New Session (capsule + wordmark) and the column toggle', () => {
     const b = mountShell()
     // Expanded, both the wordmark and the capsule start a session.

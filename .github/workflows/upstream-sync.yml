@@ -1,0 +1,53 @@
+name: Sync official Harness
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '41 1 * * *'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: upstream-sync
+  cancel-in-progress: true
+
+jobs:
+  propose-update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Merge the latest official source into an update branch
+        shell: bash
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git remote add official https://github.com/deepseek-ai/deepseek-harness.git || true
+          git fetch official master
+          git checkout -B automation/upstream-sync origin/master
+          git merge --no-edit official/master
+
+      - name: Push update branch and open a pull request
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if git diff --quiet origin/master...HEAD; then
+            echo 'DSH Desktop already contains the latest official source.'
+            exit 0
+          fi
+          git push --force-with-lease origin automation/upstream-sync
+          existing="$(gh pr list --head automation/upstream-sync --base master --state open --json number --jq '.[0].number')"
+          if [ -z "$existing" ]; then
+            gh pr create \
+              --base master \
+              --head automation/upstream-sync \
+              --title 'sync: merge latest official Harness' \
+              --body 'Automated upstream merge. Installer workflows must pass before this pull request is merged.'
+          fi

@@ -320,6 +320,13 @@
   pointer-events: none;
 }
 
+/* An opaque fade compounds the translucent native sidebar tint into a dark
+   band. Web and Linux keep the overflow cue; native glass does not need it. */
+:global(html[data-dsh-desktop-platform='darwin']) .fade,
+:global(html[data-dsh-desktop-platform='win32']) .fade {
+  display: none;
+}
+
 /* Wide-only content fades back in on expand remount (mirrors the shell). */
 .wide {
   animation: wide-in 200ms var(--ds-ease-in-out);
