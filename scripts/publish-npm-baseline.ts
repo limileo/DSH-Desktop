@@ -19,13 +19,13 @@ import { createInterface } from 'node:readline/promises'
 import { pathToFileURL } from 'node:url'
 import { parseArgs } from 'node:util'
 import { validateTarballPayload } from './publication-payload.ts'
+import { DSH_NPM_RELEASE_MANIFEST_PATTERNS } from './release/families.ts'
 
 const DEFAULT_REGISTRY = 'https://registry.npm.harnessment.com'
 const DEFAULT_OUTPUT_DIRECTORY = '.artifacts/npm-baseline'
 const PACKAGE_PATTERNS = [
   'vendor/*/package.json',
-  'packages/*/*/package.json',
-  'apps/*/package.json',
+  ...DSH_NPM_RELEASE_MANIFEST_PATTERNS,
 ] as const
 const DEPENDENCY_SECTIONS = [
   'dependencies',
@@ -570,7 +570,8 @@ class BaselinePackager {
       this.runner.run('pnpm', [
         '--filter', './vendor/**',
         '--filter', './packages/**',
-        '--filter', './apps/**',
+        '--filter', './apps/cli',
+        '--filter', './apps/web',
         '--recursive',
         'pack',
         '--pack-destination', artifactDirectory,

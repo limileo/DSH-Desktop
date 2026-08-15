@@ -1,0 +1,121 @@
+/* Custom Background: a user-owned wallpaper below readable translucent
+ * product surfaces. The image itself is supplied as a local data URL through
+ * presenter-owned variables; no external request or source path is retained. */
+
+body[data-ds-theme='custom-background'] {
+  isolation: isolate;
+  --dsw-alias-bg-base: rgb(239 242 246 / var(--dsw-custom-window-opacity, 0.55));
+  --dsw-alias-bg-layer-1: rgb(255 255 255 / var(--dsw-custom-window-opacity, 0.55));
+  --dsw-alias-bg-layer-2: rgb(248 250 252 / var(--dsw-custom-window-opacity, 0.55));
+  --dsw-alias-bg-layer-3: rgb(255 255 255 / max(0.45, var(--dsw-custom-window-opacity, 0.55)));
+  --dsw-alias-bg-module-platform: rgb(255 255 255 / var(--dsw-custom-window-opacity, 0.55));
+  --dsw-alias-bg-overlay: rgba(255, 255, 255, 0.91);
+  --dsw-alias-border-l1: rgba(255, 255, 255, 0.58);
+  --dsw-alias-border-l2: rgba(36, 45, 58, 0.14);
+  --dsw-alias-border-l3: rgba(36, 45, 58, 0.19);
+  --dsw-alias-interactive-bg-hover: rgba(255, 255, 255, 0.48);
+  --dsw-alias-interactive-bg-hover-solid: rgba(255, 255, 255, 0.88);
+  --dsw-alias-label-primary: rgb(29, 34, 42);
+  --dsw-alias-label-secondary: rgb(79, 87, 99);
+  --dsw-alias-label-tertiary: rgb(116, 124, 135);
+  --dsw-alias-button-elevated-fill: rgba(255, 255, 255, 0.70);
+  --dsw-alias-button-floating-fill: rgba(255, 255, 255, 0.78);
+  --dsw-alias-markdown-code-block-banner: rgba(249, 251, 253, 0.72);
+  --dsw-alias-markdown-code-block: rgba(252, 253, 255, 0.80);
+  --dsw-alias-scrollbar-bg-l1: rgba(66, 75, 88, 0.25);
+  --dsw-alias-scrollbar-bg-l2: rgba(66, 75, 88, 0.31);
+  --dsw-alias-scrollbar-hover-l1: rgba(66, 75, 88, 0.40);
+  --dsw-alias-scrollbar-hover-l2: rgba(66, 75, 88, 0.48);
+
+  /* The opaque wallpaper lives in ::before; body paints only the adjustable
+   * readability veil so every window edge receives the same treatment. */
+  --dsw-specific-app-background: linear-gradient(
+    var(--dsw-custom-background-overlay, rgba(18, 22, 28, 0.28)),
+    var(--dsw-custom-background-overlay, rgba(18, 22, 28, 0.28))
+  );
+  --dsw-specific-sidebar-fill: rgb(244 247 250 / var(--dsw-custom-window-opacity, 0.55));
+  --dsw-specific-sidebar-native-fill: rgb(244 247 250 / var(--dsw-custom-window-opacity, 0.55));
+  --dsw-specific-sidebar-column-fill: transparent;
+  --dsw-specific-sidebar-column-divider: 0 solid transparent;
+  --dsw-specific-sidebar-shell-margin: 10px 5px 10px 10px;
+  --dsw-specific-sidebar-shell-height-adjust: 20px;
+  --dsw-specific-sidebar-shell-width-adjust: 15px;
+  --dsw-specific-sidebar-shell-radius: 10px;
+  --dsw-specific-sidebar-shell-border: 1px solid rgba(255, 255, 255, 0.64);
+  --dsw-specific-sidebar-shell-border-inline-end: 0 solid transparent;
+  --dsw-specific-sidebar-shell-shadow: 0 18px 50px rgba(19, 27, 38, 0.15), inset 0 1px rgba(255, 255, 255, 0.72);
+  --dsw-specific-sidebar-backdrop: blur(var(--dsw-custom-window-blur, 24px)) saturate(125%);
+  --dsw-specific-sidebar-nav-item-active: rgba(255, 255, 255, 0.80);
+  --dsw-specific-sidebar-nav-item-hover: rgba(255, 255, 255, 0.48);
+  --dsw-specific-sidebar-selected-shadow: 0 6px 18px rgba(26, 35, 48, 0.09), inset 0 1px rgba(255, 255, 255, 0.76);
+
+  --dsw-specific-conversation-fill: rgb(246 249 252 / var(--dsw-custom-window-opacity, 0.55));
+  --dsw-specific-conversation-header-fill: rgb(255 255 255 / calc(var(--dsw-custom-window-opacity, 0.55) * 0.65));
+  --dsw-specific-conversation-shell-margin: 10px 10px 10px 5px;
+  --dsw-specific-conversation-shell-height-adjust: 20px;
+  --dsw-specific-conversation-shell-radius: 10px;
+  --dsw-specific-conversation-shell-border: 1px solid rgba(255, 255, 255, 0.64);
+  --dsw-specific-conversation-shell-border-inline-start: 0 solid transparent;
+  --dsw-specific-conversation-shell-shadow: 0 18px 50px rgba(19, 27, 38, 0.14), inset 0 1px rgba(255, 255, 255, 0.70);
+  --dsw-specific-conversation-backdrop: blur(var(--dsw-custom-window-blur, 24px)) saturate(120%);
+  --dsw-specific-center-column-fill: transparent;
+
+  --dsw-specific-bubble: rgb(255 255 255 / max(0.50, var(--dsw-custom-window-opacity, 0.55)));
+  --dsw-specific-bubble-highlight: rgb(244 248 255 / max(0.55, var(--dsw-custom-window-opacity, 0.55)));
+  --dsw-specific-bubble-radius: 20px;
+  --dsw-specific-bubble-border: 1px solid rgba(255, 255, 255, 0.70);
+  --dsw-specific-bubble-shadow: 0 10px 30px rgba(23, 32, 46, 0.10), inset 0 1px rgba(255, 255, 255, 0.74);
+  /* Keep glass compositing on the two window shells. Nested backdrop filters
+   * (message inside conversation inside app) create unstable Chromium layer
+   * trees while a slider changes, so inner surfaces use translucent fills. */
+  --dsw-specific-bubble-backdrop: none;
+  --dsw-specific-assistant-fill: rgb(255 255 255 / max(0.50, var(--dsw-custom-window-opacity, 0.55)));
+  --dsw-specific-assistant-border: 1px solid rgba(255, 255, 255, 0.68);
+  --dsw-specific-assistant-radius: 24px;
+  --dsw-specific-assistant-padding: 18px 20px;
+  --dsw-specific-assistant-shadow: 0 12px 36px rgba(23, 32, 46, 0.10), inset 0 1px rgba(255, 255, 255, 0.72);
+  --dsw-specific-assistant-backdrop: none;
+
+  --dsw-specific-input-major: rgb(255 255 255 / max(0.46, var(--dsw-custom-window-opacity, 0.55)));
+  --dsw-specific-input-radius: 24px;
+  --dsw-specific-input-border: rgba(255, 255, 255, 0.72);
+  --dsw-specific-input-shadow: 0 16px 42px rgba(20, 29, 42, 0.16), inset 0 1px rgba(255, 255, 255, 0.80);
+  --dsw-specific-input-backdrop: none;
+  --dsw-specific-new-session-fill: rgb(255 255 255 / max(0.45, var(--dsw-custom-window-opacity, 0.55)));
+  --dsw-specific-new-session-hover: rgba(255, 255, 255, 0.92);
+  --dsw-specific-new-session-border: rgba(255, 255, 255, 0.76);
+  --dsw-specific-new-session-radius: 18px;
+  --dsw-specific-new-session-shadow: 0 8px 24px rgba(21, 30, 43, 0.10);
+  --dsw-specific-new-session-backdrop: none;
+
+  --dsw-specific-settings-fill: rgba(246, 249, 252, 0.82);
+  --dsw-specific-settings-radius: 24px;
+  --dsw-specific-settings-border: 1px solid rgba(255, 255, 255, 0.72);
+  --dsw-specific-settings-shadow: 0 28px 80px rgba(18, 26, 38, 0.24), inset 0 1px rgba(255, 255, 255, 0.78);
+  --dsw-specific-settings-backdrop: blur(var(--dsw-custom-window-blur, 24px)) saturate(122%);
+  --dsw-specific-menu: rgba(255, 255, 255, 0.90);
+  --dsw-specific-control-radius: 12px;
+  --dsw-specific-control-backdrop: none;
+  --dsw-specific-input-control-radius: 14px;
+  --dsw-specific-theme-cube-fill: rgba(255, 255, 255, 0.44);
+  --dsw-specific-theme-cube-selected-fill: rgba(255, 255, 255, 0.86);
+  --dsw-specific-theme-cube-selected-border: rgba(255, 255, 255, 0.94);
+}
+
+body[data-ds-theme='custom-background']::before {
+  content: '';
+  position: fixed;
+  z-index: -1;
+  inset: -32px;
+  pointer-events: none;
+  background-color: rgb(202, 210, 220);
+  background-image: var(
+    --dsw-custom-background-image,
+    linear-gradient(145deg, rgb(191, 204, 220), rgb(237, 217, 207) 52%, rgb(203, 216, 211))
+  );
+  background-position: center;
+  background-size: var(--dsw-custom-background-fit, cover);
+  background-repeat: no-repeat;
+  filter: blur(var(--dsw-custom-background-blur, 0px));
+  transform: translateZ(0);
+}

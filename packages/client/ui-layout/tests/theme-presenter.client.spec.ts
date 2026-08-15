@@ -4,7 +4,7 @@
 // set, theme-color metadata follows the rendered body background, and dispose
 // retracts everything the presenter wrote.
 
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ThemeSnapshot } from '@deepseek-ai/dsh-client-ui-theme/client'
 import {
   DARK_ATTRIBUTE, THEME_ATTRIBUTE, ThemePresenter,
@@ -16,7 +16,13 @@ const DARK_THEME_COLOR = 'rgb(21, 21, 23)'
 function snapshot(colorScheme: 'light' | 'dark', tokens: Record<string, string> = {}): ThemeSnapshot {
   // The presenter must key off colorScheme, not the id — keep them distinct.
   const active = { id: `${colorScheme}-test`, colorScheme, tokens }
-  return { preference: colorScheme, active, themes: [active], revision: 1 }
+  return {
+    preference: colorScheme,
+    active,
+    themes: [active],
+    customBackground: { image: '', overlay: 28, blur: 0, fit: 'cover', transparency: 45, windowBlur: 24 },
+    revision: 1,
+  }
 }
 
 function clearThemePresentation(): void {
@@ -80,6 +86,28 @@ describe('ThemePresenter', () => {
     expect(document.body.style.getPropertyValue('--dsw-alias-bg')).toBe('#fff')
     // The old theme's extra variable is gone, not merged.
     expect(document.body.style.getPropertyValue('--dsw-alias-fg')).toBe('')
+  })
+
+  it('updates tokens differentially so an unchanged wallpaper is never detached', () => {
+    const presenter = new ThemePresenter()
+    presenter.apply(snapshot('light', { '--wallpaper': 'url(image)', '--overlay': '0.2' }))
+    const setProperty = vi.spyOn(document.body.style, 'setProperty')
+    const removeProperty = vi.spyOn(document.body.style, 'removeProperty')
+    presenter.apply(snapshot('light', { '--wallpaper': 'url(image)', '--overlay': '0.3' }))
+    expect(setProperty).toHaveBeenCalledOnce()
+    expect(setProperty).toHaveBeenCalledWith('--overlay', '0.3')
+    expect(removeProperty).not.toHaveBeenCalledWith('--wallpaper')
+  })
+
+  it('does not reapply structural attributes or force computed styles for slider-only tokens', () => {
+    const presenter = new ThemePresenter()
+    const computedStyle = vi.spyOn(window, 'getComputedStyle')
+    const setAttribute = vi.spyOn(document.body, 'setAttribute')
+    presenter.apply(snapshot('light', { '--wallpaper': 'url(image)', '--overlay': '0.2' }))
+    presenter.apply(snapshot('light', { '--wallpaper': 'url(image)', '--overlay': '0.3' }))
+    expect(computedStyle).toHaveBeenCalledOnce()
+    expect(setAttribute).toHaveBeenCalledOnce()
+    expect(setAttribute).toHaveBeenCalledWith(THEME_ATTRIBUTE, 'light-test')
   })
 
   it('dispose removes color-scheme, the attribute, and every applied variable, sparing foreign inline styles', () => {

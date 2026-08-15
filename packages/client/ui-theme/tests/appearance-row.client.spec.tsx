@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-/** AppearanceRow behavior: five cubes, selection follows the persisted
+/** AppearanceRow behavior: six cubes, selection follows the persisted
  * preference, clicks drive setTheme. */
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
@@ -19,7 +19,20 @@ const COPY: Record<string, string> = {
   'appearance.system': 'System',
   'appearance.wechat': 'Soft chat',
   'appearance.lightTexture': 'Light texture',
+  'appearance.customBackground': 'Custom background',
+  'appearance.background.empty': 'Choose an image',
+  'appearance.background.choose': 'Choose image',
+  'appearance.background.fit': 'Image fit',
+  'appearance.background.fit.cover': 'Fill window',
+  'appearance.background.fit.contain': 'Show full image',
+  'appearance.background.overlay': 'Overlay',
+  'appearance.background.blur': 'Blur',
+  'appearance.background.transparency': 'Window transparency',
+  'appearance.background.windowBlur': 'Window blur',
+  'appearance.background.privacy': 'Local only',
 }
+
+const background = { image: '', overlay: 28, blur: 0, fit: 'cover' as const, transparency: 45, windowBlur: 24 }
 
 /** Empty global standard-kit hooks (the row reads neither). */
 function emptySessions() {
@@ -38,8 +51,10 @@ function emptyWorkspaces() {
 function mount(preference: ThemePreference = 'system') {
   // Real store instance — the sanctioned zero-machinery path for tests.
   const store = createAppearanceRowStore().create()
-  store.actions.sync(preference, 0)
+  store.actions.sync(preference, background, 0)
   const setTheme = vi.fn()
+  const setCustomBackground = vi.fn()
+  const previewCustomBackground = vi.fn()
   const props: AppearanceRowComponentProps = {
     useSessions: emptySessions(),
     useWorkspaces: emptyWorkspaces(),
@@ -47,16 +62,18 @@ function mount(preference: ThemePreference = 'system') {
     actions: store.actions,
     t: (key: string) => COPY[key] ?? key,
     setTheme,
+    setCustomBackground,
+    previewCustomBackground,
   }
   render(<AppearanceRow {...props} />)
-  return { store, setTheme }
+  return { store, setTheme, setCustomBackground, previewCustomBackground }
 }
 
 const pressed = (name: RegExp): string | null =>
   screen.getByRole('button', { name }).getAttribute('aria-pressed')
 
 describe('AppearanceRow', () => {
-  it('renders the title and five cubes with the preference cube selected', () => {
+  it('renders the title and six cubes with the preference cube selected', () => {
     mount('dark')
     expect(screen.getByText('Appearance')).toBeDefined()
     expect(pressed(/Dark/)).toBe('true')
@@ -64,17 +81,18 @@ describe('AppearanceRow', () => {
     expect(pressed(/System/)).toBe('false')
     expect(pressed(/Soft chat/)).toBe('false')
     expect(pressed(/Light texture/)).toBe('false')
+    expect(pressed(/Custom background/)).toBe('false')
   })
 
   it('routes both product themes through the persisted preference boundary', () => {
     const b = mount('light')
     fireEvent.click(screen.getByRole('button', { name: /Soft chat/ }))
     expect(b.setTheme).toHaveBeenCalledWith('wechat')
-    act(() => { b.store.actions.sync('wechat', 1) })
+    act(() => { b.store.actions.sync('wechat', background, 1) })
     expect(pressed(/Soft chat/)).toBe('true')
     fireEvent.click(screen.getByRole('button', { name: /Light texture/ }))
     expect(b.setTheme).toHaveBeenLastCalledWith('light-texture')
-    act(() => { b.store.actions.sync('light-texture', 2) })
+    act(() => { b.store.actions.sync('light-texture', background, 2) })
     expect(pressed(/Light texture/)).toBe('true')
   })
 
@@ -84,8 +102,27 @@ describe('AppearanceRow', () => {
     expect(b.setTheme).toHaveBeenCalledWith('light')
     // No store write yet: selection is unchanged.
     expect(pressed(/Dark/)).toBe('true')
-    act(() => { b.store.actions.sync('light', 1) })
+    act(() => { b.store.actions.sync('light', background, 1) })
     expect(pressed(/^Light$/)).toBe('true')
     expect(pressed(/Dark/)).toBe('false')
+  })
+
+  it('previews range movement and only commits when the interaction completes', () => {
+    const b = mount('custom-background')
+    fireEvent.change(screen.getByRole('combobox', { name: /Image fit/ }), { target: { value: 'contain' } })
+    expect(b.setCustomBackground).toHaveBeenCalledWith('fit', 'contain')
+    const overlay = screen.getByRole('slider', { name: /Overlay/ })
+    fireEvent.change(overlay, { target: { value: '42' } })
+    expect(b.previewCustomBackground).toHaveBeenCalledWith('overlay', 42)
+    expect(b.setCustomBackground).not.toHaveBeenCalledWith('overlay', 42)
+    act(() => { b.store.actions.sync('custom-background', { ...background, overlay: 42 }, 1) })
+    fireEvent.pointerUp(screen.getByRole('slider', { name: /Overlay/ }))
+    expect(b.setCustomBackground).toHaveBeenCalledWith('overlay', 42)
+    const transparency = screen.getByRole('slider', { name: /Window transparency/ })
+    fireEvent.change(transparency, { target: { value: '60' } })
+    expect(b.previewCustomBackground).toHaveBeenCalledWith('transparency', 60)
+    const windowBlur = screen.getByRole('slider', { name: /Window blur/ })
+    fireEvent.change(windowBlur, { target: { value: '32' } })
+    expect(b.previewCustomBackground).toHaveBeenCalledWith('windowBlur', 32)
   })
 })

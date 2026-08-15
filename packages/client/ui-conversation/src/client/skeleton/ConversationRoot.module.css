@@ -37,6 +37,12 @@
   --dsh-composer-dock-inset: 8px;
 }
 
+/* Keep the large conversation glass on a stable compositor layer. Inner
+   cards deliberately do not create nested backdrop-filter layers. */
+:global(body[data-ds-theme='custom-background']) .root {
+  isolation: isolate;
+}
+
 :global(html[data-dsh-desktop-platform='win32']) .root {
   --dsh-windows-caption-controls-width: 138px;
 }

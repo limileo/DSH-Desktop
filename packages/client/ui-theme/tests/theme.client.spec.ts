@@ -9,6 +9,16 @@ import type {
 } from '@deepseek-ai/dsh-client-ui-theme/client'
 import { ThemeRuntime } from '@deepseek-ai/dsh-client-ui-theme/client'
 
+const settings = (preference: ThemeSettings['preference']): ThemeSettings => ({
+  preference,
+  customBackgroundImage: '',
+  customBackgroundOverlay: 28,
+  customBackgroundBlur: 0,
+  customBackgroundFit: 'cover',
+  customBackgroundTransparency: 45,
+  customBackgroundWindowBlur: 24,
+})
+
 const make = (host = stubSettingsScope<ThemeSettings>()): {
   ctx: Context
   theme: ThemeRuntime
@@ -29,7 +39,7 @@ describe('ThemeRuntime', () => {
     // jsdom matchMedia is absent; system resolves to light.
     expect(snapshot.active.id).toBe('light')
     expect(snapshot.active.colorScheme).toBe('light')
-    expect(snapshot.themes.map(t => t.id)).toEqual(['light', 'dark', 'wechat', 'light-texture'])
+    expect(snapshot.themes.map(t => t.id)).toEqual(['light', 'dark', 'wechat', 'light-texture', 'custom-background'])
   })
 
   it('setTheme switches, writes through the scope, republishes, and keeps DOM untouched', () => {
@@ -64,19 +74,59 @@ describe('ThemeRuntime', () => {
     expect(host.set).toHaveBeenCalledWith('preference', 'light-texture')
   })
 
+  it('persists the custom background and projects its controls as CSS tokens', () => {
+    const { theme, host } = make()
+    theme.setCustomBackground('image', 'data:image/png;base64,YQ==')
+    theme.setCustomBackground('overlay', 41)
+    theme.setCustomBackground('blur', 7)
+    theme.setCustomBackground('fit', 'contain')
+    theme.setCustomBackground('transparency', 62)
+    theme.setCustomBackground('windowBlur', 31)
+    theme.setTheme('custom-background')
+    expect(theme.getTheme().customBackground).toEqual({
+      image: 'data:image/png;base64,YQ==', overlay: 41, blur: 7, fit: 'contain', transparency: 62, windowBlur: 31,
+    })
+    expect(theme.getTheme().active.tokens).toMatchObject({
+      '--dsw-custom-background-overlay': 'rgba(18, 22, 28, 0.41)',
+      '--dsw-custom-background-blur': '7px',
+      '--dsw-custom-background-fit': 'contain',
+      '--dsw-custom-window-opacity': '0.62',
+      '--dsw-custom-window-blur': '31px',
+    })
+    expect(host.set).toHaveBeenCalledWith('customBackgroundImage', 'data:image/png;base64,YQ==')
+    expect(host.set).toHaveBeenCalledWith('preference', 'custom-background')
+  })
+
+  it('coalesces slider previews to one display frame and persists only the final value', async () => {
+    const { theme, host, events } = make()
+    theme.setTheme('custom-background')
+    host.set.mockClear()
+    theme.previewCustomBackground('overlay', 31)
+    theme.previewCustomBackground('overlay', 32)
+    theme.previewCustomBackground('overlay', 33)
+    expect(host.set).not.toHaveBeenCalled()
+    await vi.waitFor(() => { expect(theme.getTheme().customBackground.overlay).toBe(33) })
+    expect(events).toHaveLength(2)
+    theme.setCustomBackground('overlay', 33)
+    expect(host.set).toHaveBeenCalledOnce()
+    expect(host.set).toHaveBeenCalledWith('customBackgroundOverlay', 33)
+    theme.setCustomBackground('overlay', 33)
+    expect(host.set).toHaveBeenCalledOnce()
+  })
+
   it('adopts a published Host section without writing it back', () => {
     const { theme, events, host } = make()
-    host.publish({ status: 'ready', value: { preference: 'dark' }, revision: 1, writable: true })
+    host.publish({ status: 'ready', value: settings('dark'), revision: 1, writable: true })
     expect(theme.getTheme().preference).toBe('dark')
     expect(events).toHaveLength(1)
     expect(host.set).not.toHaveBeenCalled()
-    host.publish({ value: { preference: 'dark' }, revision: 2 })
+    host.publish({ value: settings('dark'), revision: 2 })
     expect(events).toHaveLength(1)
   })
 
   it('adopts a section already standing at construction', () => {
     const host = stubSettingsScope<ThemeSettings>()
-    host.publish({ status: 'ready', value: { preference: 'dark' }, revision: 1, writable: true })
+    host.publish({ status: 'ready', value: settings('dark'), revision: 1, writable: true })
     const { theme } = make(host)
     expect(theme.getTheme().preference).toBe('dark')
   })
@@ -91,12 +141,12 @@ describe('ThemeRuntime', () => {
   it('registered themes join the snapshot; disposing the active one resets to default', () => {
     const { theme, events, host } = make()
     const dispose = theme.register({ id: 'sepia', colorScheme: 'light', tokens: { '--dsw-alias-bg-base': 'red' } })
-    expect(theme.getTheme().themes.map(t => t.id)).toEqual(['light', 'dark', 'wechat', 'light-texture', 'sepia'])
+    expect(theme.getTheme().themes.map(t => t.id)).toEqual(['light', 'dark', 'wechat', 'light-texture', 'custom-background', 'sepia'])
     theme.setTheme('sepia')
     expect(theme.getTheme().active.tokens['--dsw-alias-bg-base']).toBe('red')
     dispose()
     expect(theme.getTheme().preference).toBe('system')
-    expect(theme.getTheme().themes.map(t => t.id)).toEqual(['light', 'dark', 'wechat', 'light-texture'])
+    expect(theme.getTheme().themes.map(t => t.id)).toEqual(['light', 'dark', 'wechat', 'light-texture', 'custom-background'])
     // Custom ids are in-process extension themes; only the built-in product
     // preferences cross the Host settings schema.
     expect(host.set).not.toHaveBeenCalled()

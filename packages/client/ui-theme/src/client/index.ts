@@ -20,14 +20,20 @@ import { AppearanceRow } from './AppearanceRow.tsx'
 import { createAppearanceRowStore } from './settings-store.ts'
 import { en, zh, type ThemeKey } from './locales.ts'
 import {
-  DEFAULT_PREFERENCE, isThemePreference, THEME_PREFERENCE_FIELD, THEME_SETTINGS_NAMESPACE,
-  type ThemePreference, type ThemeSettings,
+  CUSTOM_BACKGROUND_BLUR_FIELD, CUSTOM_BACKGROUND_FIT_FIELD, CUSTOM_BACKGROUND_IMAGE_FIELD,
+  CUSTOM_BACKGROUND_OVERLAY_FIELD, CUSTOM_BACKGROUND_TRANSPARENCY_FIELD,
+  CUSTOM_BACKGROUND_WINDOW_BLUR_FIELD,
+  DEFAULT_CUSTOM_BACKGROUND, DEFAULT_PREFERENCE,
+  isThemePreference, THEME_PREFERENCE_FIELD, THEME_SETTINGS_NAMESPACE,
+  type CustomBackgroundSettings, type ThemePreference, type ThemeSettings,
 } from '../theme-settings.ts'
 
 export type { AppearanceRowComponentProps, AppearanceRowInjected } from './AppearanceRow.tsx'
 export type { AppearanceRowState } from './settings-store.ts'
 export type { ThemeKey } from './locales.ts'
-export type { ThemePreference, ThemeSettings } from '../theme-settings.ts'
+export type {
+  CustomBackgroundFit, CustomBackgroundSettings, ThemePreference, ThemeSettings,
+} from '../theme-settings.ts'
 
 /** Namespace owning this feature's settings-row copy. */
 export const SETTINGS_NS = 'settings.theme'
@@ -82,6 +88,8 @@ export interface ThemeSnapshot {
   active: ThemeDefinition
   /** Registered themes in registration order. */
   themes: readonly ThemeDefinition[]
+  /** Durable image and readability controls for the custom-background theme. */
+  customBackground: Readonly<CustomBackgroundSettings>
   /** Monotonic change counter (registry or active changes). */
   revision: number
 }
@@ -120,6 +128,7 @@ const BUILTIN_THEMES: readonly ThemeDefinition[] = Object.freeze([
   Object.freeze({ id: 'dark', colorScheme: 'dark' as const, tokens: Object.freeze({}) }),
   Object.freeze({ id: 'wechat', colorScheme: 'light' as const, tokens: Object.freeze({}) }),
   Object.freeze({ id: 'light-texture', colorScheme: 'light' as const, tokens: Object.freeze({}) }),
+  Object.freeze({ id: 'custom-background', colorScheme: 'light' as const, tokens: Object.freeze({}) }),
 ])
 
 const BUILTIN_INSPECT_TOKENS: readonly ThemeTokenInspection[] = Object.freeze([
@@ -154,12 +163,17 @@ export class ThemeRuntime {
   private readonly host: SettingsScope<ThemeSettings>
   private themes: ThemeDefinition[] = [...BUILTIN_THEMES]
   private preference: ThemePreference
+  private customBackground: CustomBackgroundSettings = { ...DEFAULT_CUSTOM_BACKGROUND }
+  /** Last Host-backed values, distinct from the live drag preview. */
+  private durableCustomBackground: CustomBackgroundSettings = { ...DEFAULT_CUSTOM_BACKGROUND }
   private revision = 0
   private snapshot: ThemeSnapshot
   private readonly media: MediaQueryList | undefined
   /** Override layers by source; seq (monotonic) is the stacking order. */
   private readonly overrides = new Map<string, { seq: number; tokens: ThemeTokenOverrides }>()
   private overrideSeq = 0
+  /** One pending browser-frame publish for high-frequency slider previews. */
+  private previewFrame: number | undefined
 
   /**
    * @param ctx - owning context (change events are emitted on it; the
@@ -185,6 +199,7 @@ export class ThemeRuntime {
       }, 'ui-theme: prefers-color-scheme listener')
     }
     ctx.effect(() => host.subscribe(() => { this.adopt() }), 'ui-theme: settings scope adoption')
+    ctx.effect(() => () => { this.cancelPreviewPublish() }, 'ui-theme: pending preview frame')
     this.adopt()
   }
 
@@ -231,11 +246,61 @@ export class ThemeRuntime {
     this.publish()
   }
 
+  /**
+   * Update one custom-background control and persist it through the Host scope.
+   * Presentation updates optimistically; the scope remains the durable source
+   * of truth and will converge the value again after the write settles.
+   */
+  setCustomBackground(
+    field: keyof CustomBackgroundSettings,
+    value: string | number,
+  ): void {
+    const next = normalizeCustomBackgroundField(field, value)
+    const presentationChanged = this.customBackground[field] !== next
+    if (presentationChanged) this.customBackground = { ...this.customBackground, [field]: next }
+    const durableField = {
+      image: CUSTOM_BACKGROUND_IMAGE_FIELD,
+      overlay: CUSTOM_BACKGROUND_OVERLAY_FIELD,
+      blur: CUSTOM_BACKGROUND_BLUR_FIELD,
+      fit: CUSTOM_BACKGROUND_FIT_FIELD,
+      transparency: CUSTOM_BACKGROUND_TRANSPARENCY_FIELD,
+      windowBlur: CUSTOM_BACKGROUND_WINDOW_BLUR_FIELD,
+    }[field]
+    if (this.durableCustomBackground[field] !== next) {
+      this.durableCustomBackground = { ...this.durableCustomBackground, [field]: next }
+      void this.host.set(durableField, next)
+    }
+    if (presentationChanged || this.previewFrame !== undefined) this.publish()
+  }
+
+  /**
+   * Apply an in-memory slider preview without touching durable settings. The
+   * matching setCustomBackground call on pointer/key completion performs the
+   * single Host write.
+   */
+  previewCustomBackground(field: 'overlay' | 'blur' | 'transparency' | 'windowBlur', value: number): void {
+    const next = normalizeCustomBackgroundField(field, value)
+    if (this.customBackground[field] === next) return
+    this.customBackground = { ...this.customBackground, [field]: next }
+    this.schedulePreviewPublish()
+  }
+
   /** Adopt the scope's accepted durable preference without writing it back. */
   private adopt(): void {
     const section = this.host.getSnapshot().value
-    if (section === undefined || this.preference === section.preference) return
+    if (section === undefined) return
+    const customBackground: CustomBackgroundSettings = {
+      image: section.customBackgroundImage,
+      overlay: section.customBackgroundOverlay,
+      blur: section.customBackgroundBlur,
+      fit: section.customBackgroundFit,
+      transparency: section.customBackgroundTransparency,
+      windowBlur: section.customBackgroundWindowBlur,
+    }
+    if (this.preference === section.preference && sameCustomBackground(this.customBackground, customBackground)) return
     this.preference = section.preference
+    this.customBackground = customBackground
+    this.durableCustomBackground = { ...customBackground }
     this.publish()
   }
 
@@ -304,6 +369,7 @@ export class ThemeRuntime {
       preference: this.preference,
       active: this.composeActive(active),
       themes: Object.freeze([...this.themes]),
+      customBackground: Object.freeze({ ...this.customBackground }),
       revision: this.revision,
     })
   }
@@ -315,8 +381,11 @@ export class ThemeRuntime {
    * Without layers the registered definition passes through by identity.
    */
   private composeActive(active: ThemeDefinition): ThemeDefinition {
-    if (this.overrides.size === 0) return active
-    const tokens: ThemeTokens = { ...active.tokens }
+    const customTokens = active.id === 'custom-background'
+      ? customBackgroundTokens(this.customBackground)
+      : undefined
+    if (this.overrides.size === 0 && customTokens === undefined) return active
+    const tokens: ThemeTokens = { ...active.tokens, ...customTokens }
     for (const layer of [...this.overrides.values()].sort((a, b) => a.seq - b.seq)) {
       for (const [name, modes] of Object.entries(layer.tokens)) {
         tokens[name] = modes[active.colorScheme]
@@ -326,10 +395,60 @@ export class ThemeRuntime {
   }
 
   private publish(): void {
+    this.cancelPreviewPublish()
     this.revision += 1
     this.snapshot = this.buildSnapshot()
     this.ctx.emit('theme/change', this.snapshot)
   }
+
+  /** Coalesce dense pointer input to at most one theme update per display frame. */
+  private schedulePreviewPublish(): void {
+    if (typeof requestAnimationFrame === 'undefined') {
+      this.publish()
+      return
+    }
+    if (this.previewFrame !== undefined) return
+    this.previewFrame = requestAnimationFrame(() => {
+      this.previewFrame = undefined
+      this.publish()
+    })
+  }
+
+  /** Retract a queued preview when a synchronous theme change supersedes it. */
+  private cancelPreviewPublish(): void {
+    if (this.previewFrame === undefined) return
+    if (typeof cancelAnimationFrame !== 'undefined') cancelAnimationFrame(this.previewFrame)
+    this.previewFrame = undefined
+  }
+}
+
+function sameCustomBackground(left: CustomBackgroundSettings, right: CustomBackgroundSettings): boolean {
+  return left.image === right.image && left.overlay === right.overlay
+    && left.blur === right.blur && left.fit === right.fit
+    && left.transparency === right.transparency && left.windowBlur === right.windowBlur
+}
+
+function normalizeCustomBackgroundField(
+  field: keyof CustomBackgroundSettings,
+  value: string | number,
+): string | number {
+  if (field === 'image') return typeof value === 'string' ? value : ''
+  if (field === 'fit') return value === 'contain' ? 'contain' : 'cover'
+  const numeric = typeof value === 'number' && Number.isFinite(value) ? value : 0
+  const max = field === 'overlay' ? 70 : field === 'transparency' ? 100 : field === 'windowBlur' ? 40 : 24
+  return Math.round(Math.min(max, Math.max(0, numeric)))
+}
+
+function customBackgroundTokens(settings: CustomBackgroundSettings): ThemeTokens {
+  const fallback = 'linear-gradient(145deg, rgb(191, 204, 220), rgb(237, 217, 207) 52%, rgb(203, 216, 211))'
+  return Object.freeze({
+    '--dsw-custom-background-image': settings.image === '' ? fallback : `url(${JSON.stringify(settings.image)})`,
+    '--dsw-custom-background-overlay': `rgba(18, 22, 28, ${settings.overlay / 100})`,
+    '--dsw-custom-background-blur': `${settings.blur}px`,
+    '--dsw-custom-background-fit': settings.fit,
+    '--dsw-custom-window-opacity': String(settings.transparency / 100),
+    '--dsw-custom-window-blur': `${settings.windowBlur}px`,
+  })
 }
 
 /**
@@ -393,7 +512,7 @@ export function apply(ctx: ClientContext): void {
   const store = createAppearanceRowStore()
   let bound: BoundActions<typeof store> | undefined
   const sync = (snapshot: ThemeSnapshot): void => {
-    bound?.sync(snapshot.preference, snapshot.revision)
+    bound?.sync(snapshot.preference, snapshot.customBackground, snapshot.revision)
   }
   ctx.on('theme/change', sync)
   const injected = (actions: BoundActions<typeof store>): AppearanceRowInjected => {
@@ -403,6 +522,8 @@ export function apply(ctx: ClientContext): void {
     sync(theme.getTheme())
     return {
       setTheme: (id) => { theme.setTheme(id) },
+      setCustomBackground: (field, value) => { theme.setCustomBackground(field, value) },
+      previewCustomBackground: (field, value) => { theme.previewCustomBackground(field, value) },
     }
   }
   ctx.slots.inject('settings.general.item', () => ctx.slots.register({

@@ -17,8 +17,11 @@ export const THEME_ATTRIBUTE = 'data-ds-theme'
 
 /** Applies theme snapshots to the document; one instance per plugin fiber. */
 export class ThemePresenter {
-  /** Token names this presenter wrote in the last apply (its retraction set). */
-  private appliedTokens: string[] = []
+  /** Token values written in the last apply (diff source and retraction set). */
+  private readonly appliedTokens = new Map<string, string>()
+  /** Last structural presentation, used to avoid redundant style invalidation. */
+  private appliedScheme: 'light' | 'dark' | undefined
+  private appliedThemeId: string | undefined
   /** The single metadata node this presenter inserts and removes. */
   private readonly themeColorMeta: HTMLMetaElement
 
@@ -39,19 +42,33 @@ export class ThemePresenter {
    */
   apply(snapshot: ThemeSnapshot): void {
     const scheme = snapshot.active.colorScheme
-    document.documentElement.style.colorScheme = scheme
     const body = document.body
-    body.setAttribute(THEME_ATTRIBUTE, snapshot.active.id)
-    if (scheme === 'dark') body.setAttribute(DARK_ATTRIBUTE, '')
-    else body.removeAttribute(DARK_ATTRIBUTE)
-    for (const name of this.appliedTokens) body.style.removeProperty(name)
-    this.appliedTokens = []
-    for (const [name, value] of Object.entries(snapshot.active.tokens)) {
-      body.style.setProperty(name, value)
-      this.appliedTokens.push(name)
+    const structureChanged = this.appliedScheme !== scheme || this.appliedThemeId !== snapshot.active.id
+    if (this.appliedScheme !== scheme) {
+      document.documentElement.style.colorScheme = scheme
+      if (scheme === 'dark') body.setAttribute(DARK_ATTRIBUTE, '')
+      else body.removeAttribute(DARK_ATTRIBUTE)
+      this.appliedScheme = scheme
     }
-    this.themeColorMeta.content = getComputedStyle(body).backgroundColor
-    if (!this.themeColorMeta.isConnected) document.head.append(this.themeColorMeta)
+    if (this.appliedThemeId !== snapshot.active.id) {
+      body.setAttribute(THEME_ATTRIBUTE, snapshot.active.id)
+      this.appliedThemeId = snapshot.active.id
+    }
+    const nextTokens = snapshot.active.tokens
+    for (const name of this.appliedTokens.keys()) {
+      if (name in nextTokens) continue
+      body.style.removeProperty(name)
+      this.appliedTokens.delete(name)
+    }
+    for (const [name, value] of Object.entries(nextTokens)) {
+      if (this.appliedTokens.get(name) === value) continue
+      body.style.setProperty(name, value)
+      this.appliedTokens.set(name, value)
+    }
+    if (structureChanged || !this.themeColorMeta.isConnected) {
+      this.themeColorMeta.content = getComputedStyle(body).backgroundColor
+      if (!this.themeColorMeta.isConnected) document.head.append(this.themeColorMeta)
+    }
   }
 
   /** Retract root color-scheme, the palette attribute, token variables, and the owned metadata node. */
@@ -60,8 +77,10 @@ export class ThemePresenter {
     const body = document.body
     body.removeAttribute(DARK_ATTRIBUTE)
     body.removeAttribute(THEME_ATTRIBUTE)
-    for (const name of this.appliedTokens) body.style.removeProperty(name)
-    this.appliedTokens = []
+    for (const name of this.appliedTokens.keys()) body.style.removeProperty(name)
+    this.appliedTokens.clear()
+    this.appliedScheme = undefined
+    this.appliedThemeId = undefined
     this.themeColorMeta.remove()
   }
 }

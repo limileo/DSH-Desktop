@@ -36,6 +36,12 @@
   --dsh-scrollbar-thumb-hover: var(--dsw-alias-scrollbar-hover-l2);
 }
 
+/* Custom wallpaper keeps one long-lived compositor surface for the glass
+   shell instead of rebuilding the sidebar layer during every slider frame. */
+:global(body[data-ds-theme='custom-background']) .root {
+  isolation: isolate;
+}
+
 /* Web does not reserve title-bar space. The Electron marker reveals this
    sidebar-owned strip and shifts the column below the frameless controls. */
 .titlebarDragRegion {

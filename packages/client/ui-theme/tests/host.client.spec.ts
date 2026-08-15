@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import type { WebServer } from '@deepseek-ai/dsh-host-webserver'
 import { SettingsProvider, settingsNamespace, type SettingsNamespace } from '@deepseek-ai/dsh-settings'
 import {
-  DEFAULT_PREFERENCE, THEME_SETTINGS_NAMESPACE, apply,
+  DEFAULT_CUSTOM_BACKGROUND, DEFAULT_PREFERENCE, THEME_SETTINGS_NAMESPACE, apply,
 } from '@deepseek-ai/dsh-client-ui-theme'
 
 class MemorySettings extends SettingsProvider {
@@ -21,13 +21,27 @@ describe('ui-theme host', () => {
     const fiber = ctx.plugin({ apply })
     await fiber.await()
     const ns = settingsNamespace(THEME_SETTINGS_NAMESPACE)
-    expect(ctx.settings.get(ns)).toEqual({ preference: DEFAULT_PREFERENCE })
+    expect(ctx.settings.get(ns)).toEqual({
+      preference: DEFAULT_PREFERENCE,
+      customBackgroundImage: DEFAULT_CUSTOM_BACKGROUND.image,
+      customBackgroundOverlay: DEFAULT_CUSTOM_BACKGROUND.overlay,
+      customBackgroundBlur: DEFAULT_CUSTOM_BACKGROUND.blur,
+      customBackgroundFit: DEFAULT_CUSTOM_BACKGROUND.fit,
+      customBackgroundTransparency: DEFAULT_CUSTOM_BACKGROUND.transparency,
+      customBackgroundWindowBlur: DEFAULT_CUSTOM_BACKGROUND.windowBlur,
+    })
     await ctx.settings.update(ns, { preference: 'dark' })
-    expect(ctx.settings.get(ns)).toEqual({ preference: 'dark' })
+    expect(ctx.settings.get(ns)).toMatchObject({ preference: 'dark' })
     await ctx.settings.update(ns, { preference: 'wechat' })
-    expect(ctx.settings.get(ns)).toEqual({ preference: 'wechat' })
+    expect(ctx.settings.get(ns)).toMatchObject({ preference: 'wechat' })
     await ctx.settings.update(ns, { preference: 'light-texture' })
-    expect(ctx.settings.get(ns)).toEqual({ preference: 'light-texture' })
+    expect(ctx.settings.get(ns)).toMatchObject({ preference: 'light-texture' })
+    await ctx.settings.update(ns, {
+      preference: 'custom-background', customBackgroundImage: 'data:image/png;base64,YQ==', customBackgroundOverlay: 45,
+    })
+    expect(ctx.settings.get(ns)).toMatchObject({
+      preference: 'custom-background', customBackgroundImage: 'data:image/png;base64,YQ==', customBackgroundOverlay: 45,
+    })
     await expect(ctx.settings.update(ns, { preference: 'sepia' })).rejects.toThrow()
     await fiber.dispose()
     expect(ctx.settings.describe().map(row => row.ns)).not.toContain(ns)

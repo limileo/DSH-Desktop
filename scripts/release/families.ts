@@ -1,8 +1,8 @@
 /**
  * The three independent publish sequences this repository releases from
- * (`packages/` + `apps/`, `vendor/`, and `native/`) and the two this module
- * owns: `dsh` and `vendor`. Each family carries its own version baseline, tag
- * naming, and publish set, so releasing one never republishes another
+ * (`packages/` plus the published app assemblies, `vendor/`, and `native/`)
+ * and the two this module owns: `dsh` and `vendor`. Each family carries its own
+ * version baseline, tag naming, and publish set, so releasing one never republishes another
  * ([rationale](../../.agents/notes/implemented/process/2026-08-10-npm-release-sequences.md)).
  *
  * The family dimension lives here only. A new sequence adds a subclass and a
@@ -18,6 +18,26 @@ const ORDER_SECTIONS = ['dependencies', 'optionalDependencies'] as const
 
 /** The workspace root manifest, which is never a release member. */
 const WORKSPACE_ROOT_PACKAGE = '@deepseek-ai/dsh-root'
+
+/** App directories whose manifests belong to the dsh npm release family. */
+export const DSH_NPM_RELEASE_APP_DIRECTORIES = ['apps/cli', 'apps/web'] as const
+
+const DSH_NPM_RELEASE_APP_DIRECTORY_SET: ReadonlySet<string> = new Set(DSH_NPM_RELEASE_APP_DIRECTORIES)
+
+/** Manifest patterns that select every dsh npm release member. */
+export const DSH_NPM_RELEASE_MANIFEST_PATTERNS = [
+  'packages/*/*/package.json',
+  ...DSH_NPM_RELEASE_APP_DIRECTORIES.map(directory => `${directory}/package.json`),
+] as const
+
+/**
+ * Whether an app directory is published with the dsh npm release family.
+ * @param directory - Repository-relative app directory.
+ * @returns `true` for an npm-published app assembly.
+ */
+export function isDshNpmReleaseAppDirectory(directory: string): boolean {
+  return DSH_NPM_RELEASE_APP_DIRECTORY_SET.has(directory)
+}
 
 /** One publishable package of a release family. */
 export interface ReleaseMember {
@@ -193,10 +213,10 @@ export abstract class ReleaseFamily {
   abstract readonly installedEntry: InstalledEntry | undefined
 }
 
-/** `packages/*` and `apps/*`: one shared version across the whole family. */
+/** `packages/*` plus the published app assemblies: one shared version across the whole family. */
 class DshFamily extends ReleaseFamily {
   readonly id = 'dsh'
-  readonly patterns = ['packages/*/*/package.json', 'apps/*/package.json'] as const
+  readonly patterns = DSH_NPM_RELEASE_MANIFEST_PATTERNS
   readonly tagPrefix = 'dsh-v'
 
   /**

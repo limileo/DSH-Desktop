@@ -1,7 +1,12 @@
 /** Release family discovery, publish order, tag naming, and the bump judgements. */
 
 import { describe, expect, it } from 'vitest'
-import { releaseFamily, type ReleaseMember } from './families.ts'
+import {
+  DSH_NPM_RELEASE_MANIFEST_PATTERNS,
+  isDshNpmReleaseAppDirectory,
+  releaseFamily,
+  type ReleaseMember,
+} from './families.ts'
 import { compareVersions, nextVendorVersion, reachesPayload } from './bump.ts'
 
 /**
@@ -16,6 +21,17 @@ function member(directory: string, name: string, manifest: Record<string, unknow
 }
 
 describe('release families', () => {
+  it('publishes the CLI and Web app assemblies but not the private desktop assembly', () => {
+    expect(DSH_NPM_RELEASE_MANIFEST_PATTERNS).toEqual([
+      'packages/*/*/package.json',
+      'apps/cli/package.json',
+      'apps/web/package.json',
+    ])
+    expect(isDshNpmReleaseAppDirectory('apps/cli')).toBe(true)
+    expect(isDshNpmReleaseAppDirectory('apps/web')).toBe(true)
+    expect(isDshNpmReleaseAppDirectory('apps/desktop')).toBe(false)
+  })
+
   it('names one tag for the whole dsh family and one per vendored package', () => {
     const dsh = releaseFamily('dsh')
     const vendor = releaseFamily('vendor')
