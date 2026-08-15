@@ -16,11 +16,11 @@
 | Windows x64 | `DSH-Desktop-Windows-x64-Setup-*.exe` | 支持 |
 | macOS Intel | — | 计划支持 |
 
-macOS：打开 DMG，将 `DSH Desktop` 拖入 `Applications`。当前社区构建未使用 Apple 开发者证书；首次打开若被 Gatekeeper 拦截，请在 Finder 中右键应用并选择“打开”。
+macOS：打开 DMG，将 `DSH Desktop` 拖入 `Applications`。正式发布的 DMG 使用 Developer ID Application 证书签名，已通过 Apple 公证并装订公证票据。
 
 Windows：双击 Setup 安装包并按向导安装。当前社区构建未购买代码签名证书，Windows SmartScreen 可能显示“未知发布者”，可选择“更多信息”后继续运行。
 
-这些提示来自操作系统的签名校验，不影响安装包内置完整运行环境，也不需要用户再安装依赖。
+Windows 提示来自操作系统的发布者校验。两个安装包都内置完整运行环境，不需要用户再安装依赖。
 
 ## 界面预览
 
@@ -37,6 +37,7 @@ Windows：双击 Setup 安装包并按向导安装。当前社区构建未购买
 - 外部网页交给系统浏览器打开，并限制应用内导航来源
 - 提供原生、深色、微语主题与轻质感主题
 - 针对 macOS 和 Windows 调整窗口、标题栏、圆角与侧栏布局
+- macOS 正式版本启用 Developer ID 签名、Hardened Runtime、Apple 公证与票据装订
 - macOS DMG 与 Windows NSIS 安装包均经过实际安装启动检查
 
 ## 与官方项目的关系
@@ -45,7 +46,7 @@ Harness 核心、插件系统、Agent 能力和 Web UI 来自 [deepseek-ai/deeps
 
 `.github/workflows/desktop-portable.yml` 在 macOS 与 Windows 原生 Runner 上构建安装包。定时或手动构建会先尝试合并官方 `master`；若桌面改动与上游冲突，工作流会直接失败，避免发布未经验证的自动合并结果。
 
-已经安装的桌面应用目前不会在后台自行替换程序文件。新版本由 GitHub Releases 发布，用户按需下载安装；这样无需应用商店，但无签名条件下也不会绕过 macOS 或 Windows 的安全机制。
+已经安装的桌面应用目前不会在后台自行替换程序文件。新版本由 GitHub Releases 发布，用户按需下载安装。macOS 正式版本已经签名并公证；Windows 版本仍未签名，可能继续触发 SmartScreen。
 
 ## 从源码开发
 

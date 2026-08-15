@@ -16,11 +16,11 @@ Download the latest version from this repository's [GitHub Releases](https://git
 | Windows x64 | `DSH-Desktop-Windows-x64-Setup-*.exe` | Supported |
 | macOS Intel | — | Planned |
 
-On macOS, open the DMG and drag `DSH Desktop` to `Applications`. The community build is not signed with an Apple Developer ID; if Gatekeeper blocks the first launch, right-click the app in Finder and choose **Open**.
+On macOS, open the DMG and drag `DSH Desktop` to `Applications`. Release DMGs are signed with a Developer ID Application certificate, notarized by Apple, and carry a stapled notarization ticket.
 
 On Windows, run the Setup executable and follow the installer. The community build does not use a purchased code-signing certificate, so SmartScreen may show an unknown-publisher warning; choose **More info** to continue.
 
-These are operating-system signing warnings. The installer still contains the complete runtime and does not require separate dependencies.
+The Windows warning is an operating-system publisher check. Both installers contain the complete runtime and do not require separate dependencies.
 
 ## Preview
 
@@ -37,6 +37,7 @@ These are operating-system signing warnings. The installer still contains the co
 - Opens external pages in the system browser and restricts in-app navigation
 - Includes native, dark, Soft Chat, and Light Texture themes
 - Adapts window chrome, rounded surfaces, and sidebar layout for macOS and Windows
+- Ships the macOS release with Developer ID signing, Hardened Runtime, Apple notarization, and a stapled ticket
 - Validates both the macOS DMG and Windows NSIS installer through real install-and-launch smoke tests
 
 ## Relationship to the official project
@@ -45,7 +46,7 @@ Harness core behavior, plugins, agent capabilities, and the Web UI come from [de
 
 `.github/workflows/desktop-portable.yml` builds installers on native macOS and Windows runners. Scheduled and manual builds first attempt to merge the official `master`; conflicts fail explicitly instead of distributing an unverified automatic merge.
 
-Installed applications do not currently replace their own program files in the background. New versions are published through GitHub Releases for users to install when desired. This avoids app-store distribution but does not bypass macOS or Windows security requirements for unsigned software.
+Installed applications do not currently replace their own program files in the background. New versions are published through GitHub Releases for users to install when desired. The macOS release is signed and notarized; the Windows release remains unsigned and may still trigger SmartScreen.
 
 ## Development
 

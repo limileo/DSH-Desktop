@@ -48,8 +48,10 @@ APPLE_KEYCHAIN_PROFILE=dsh-notary pnpm run dist:mac:desktop
 
 A complete Apple ID credential group or an App Store Connect API key group is also accepted. `scripts/release-preflight.ts` validates signing identity and notarization credentials before the expensive build. `scripts/release-mac.ts` passes secrets only to the Electron Builder phase. Certificates, passwords, and environment files must never be committed.
 
+Published macOS DMGs are Developer ID signed, use Hardened Runtime, are notarized by Apple, and include a stapled notarization ticket. Validate a release with `codesign --verify --deep --strict`, `xcrun stapler validate`, and `spctl --assess --type execute` before uploading it.
+
 ## Upstream synchronization
 
 `.github/workflows/desktop-portable.yml` builds installers on native macOS and Windows runners. Scheduled and manual runs first merge the latest official `deepseek-ai/deepseek-harness` `master` in a temporary checkout. Clean merges continue through validation; conflicts or failed install-and-launch checks stop the build.
 
-The desktop app does not currently contain a background self-updater. Unsigned macOS apps cannot reliably replace themselves silently, so new versions are distributed through GitHub Releases for users to install.
+The desktop app does not currently contain a background self-updater, so new versions are distributed through GitHub Releases for users to install.

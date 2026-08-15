@@ -48,8 +48,10 @@ APPLE_KEYCHAIN_PROFILE=dsh-notary pnpm run dist:mac:desktop
 
 也可使用完整 Apple ID 凭据组，或 App Store Connect API 密钥组。`scripts/release-preflight.ts` 会在耗时构建前检查签名身份与公证凭据，`scripts/release-mac.ts` 只把秘密传给 Electron Builder 阶段。证书、密码与环境文件不得提交到仓库。
 
+公开发布的 macOS DMG 使用 Developer ID 签名并启用 Hardened Runtime，已经通过 Apple 公证并装订公证票据。上传前使用 `codesign --verify --deep --strict`、`xcrun stapler validate` 与 `spctl --assess --type execute` 完成发行验证。
+
 ## 自动吸收上游更新
 
 `.github/workflows/desktop-portable.yml` 在 macOS 和 Windows 原生 Runner 上执行安装包构建。定时或手动运行时会先在临时检出中合并官方 `deepseek-ai/deepseek-harness` 的最新 `master`。可干净合并的版本继续测试；冲突或安装启动失败都会中止构建。
 
-当前桌面应用不包含后台自更新器。无签名 macOS 应用无法可靠地静默替换自身，因此新版本通过 GitHub Releases 分发，由用户下载安装。
+当前桌面应用不包含后台自更新器，因此新版本通过 GitHub Releases 分发，由用户下载安装。
