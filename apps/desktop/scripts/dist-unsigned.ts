@@ -35,6 +35,20 @@ function macApplicationPath(): string {
   return join(distDirectory, outputDirectory, `${manifest.build.productName}.app`)
 }
 
+function ensureElectronDistribution(): void {
+  const electronDistribution = join(desktopRoot, 'node_modules/electron/dist')
+  if (!existsSync(electronDistribution)) {
+    const electronInstaller = join(desktopRoot, 'node_modules/electron/install.js')
+    if (!existsSync(electronInstaller)) {
+      throw new Error(`Electron installer is missing: ${electronInstaller}`)
+    }
+    run(process.execPath, [electronInstaller])
+  }
+  if (!existsSync(electronDistribution)) {
+    throw new Error(`Electron distribution is missing after installation: ${electronDistribution}`)
+  }
+}
+
 function mountedVolume(output: string): string {
   const match = output.match(/\t(\/Volumes\/[^\n]+)\s*$/m)
   if (match?.[1] === undefined) throw new Error(`hdiutil did not report a mounted volume:\n${output}`)
@@ -42,6 +56,7 @@ function mountedVolume(output: string): string {
 }
 
 function createMacDmg(): void {
+  ensureElectronDistribution()
   run('node', ['--import', 'tsx', 'scripts/package-unsigned.ts'])
   const application = macApplicationPath()
   if (!existsSync(application)) throw new Error(`packaged macOS application is missing: ${application}`)
@@ -86,17 +101,7 @@ function createMacDmg(): void {
 }
 
 function createWindowsInstaller(): void {
-  const electronDistribution = join(desktopRoot, 'node_modules/electron/dist')
-  if (!existsSync(electronDistribution)) {
-    const electronInstaller = join(desktopRoot, 'node_modules/electron/install.js')
-    if (!existsSync(electronInstaller)) {
-      throw new Error(`Electron installer is missing: ${electronInstaller}`)
-    }
-    run(process.execPath, [electronInstaller])
-  }
-  if (!existsSync(electronDistribution)) {
-    throw new Error(`Electron distribution is missing after installation: ${electronDistribution}`)
-  }
+  ensureElectronDistribution()
   run('pnpm', ['exec', 'electron-builder', '--win', 'nsis', '--publish', 'never'], {
     env: { ...process.env, CSC_IDENTITY_AUTO_DISCOVERY: 'false' },
     shell: true,

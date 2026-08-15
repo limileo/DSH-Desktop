@@ -23,7 +23,7 @@ function macApplicationPath(): string {
 /** Package without Developer ID discovery, then add a local integrity seal on macOS. */
 function packageUnsigned(): void {
   const pnpm = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm'
-  const builderArgs = ['exec', 'electron-builder', '--dir']
+  const builderArgs = ['exec', 'electron-builder', '--dir', '--publish', 'never']
   if (process.platform === 'darwin') builderArgs.push('--config.mac.notarize=false')
 
   run(pnpm, builderArgs, {
