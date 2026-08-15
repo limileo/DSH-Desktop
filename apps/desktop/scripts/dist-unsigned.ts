@@ -3,6 +3,7 @@
 import { spawnSync } from 'node:child_process'
 import { existsSync, readFileSync, rmSync } from 'node:fs'
 import { join, resolve } from 'node:path'
+import { detachMacVolume } from './detach-mac-volume.ts'
 
 interface DesktopManifest {
   readonly version: string
@@ -88,7 +89,9 @@ function createMacDmg(): void {
     run('ln', ['-s', '/Applications', join(volume, 'Applications')])
     run('sync', [])
   } finally {
-    if (volume !== undefined) run('hdiutil', ['detach', volume])
+    if (volume !== undefined) {
+      detachMacVolume(volume, { run: (args) => { run('hdiutil', args) } })
+    }
   }
 
   run('hdiutil', [
