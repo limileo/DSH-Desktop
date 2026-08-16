@@ -32,6 +32,7 @@ async function writePackage(
     typertSource?: string
     pluginSource?: string
     omitExports?: boolean
+    manifestPrefix?: string
   } = {},
 ): Promise<void> {
   const dir = join(base, 'node_modules', ...pkgName.split('/'))
@@ -40,7 +41,7 @@ async function writePackage(
   if (options.typertExport !== false && options.typertSource !== undefined) {
     exportsField['./typert'] = options.typertTarget ?? './typert.host.js'
   }
-  await writeFile(join(dir, 'package.json'), JSON.stringify({
+  await writeFile(join(dir, 'package.json'), (options.manifestPrefix ?? '') + JSON.stringify({
     name: pkgName,
     type: 'module',
     ...(options.omitExports ? { main: './index.js' } : { exports: exportsField }),
@@ -128,6 +129,20 @@ function mountTypertLoader(ctx: Context, config: typertLoader.Config = {}): Retu
 const LOADER_TEST_TIMEOUT = { timeout: 60_000 }
 
 describe('typert loader', () => {
+  it('accepts a package manifest prefixed by a UTF-8 BOM', LOADER_TEST_TIMEOUT, async () => {
+    root = await mkdtemp(join(tmpdir(), 'dsh-typert-loader-'))
+    await linkZod(root)
+    await writePackage(root, '@fixture/bom-manifest', {
+      manifestPrefix: '\uFEFF',
+      typertSource: typertSource('@fixture/bom-manifest', 'BomManifest'),
+    })
+    const ctx = await boot()
+
+    await mountTypertLoader(ctx, { packages: ['@fixture/bom-manifest'] })
+
+    expect(ctx.typert.get('@fixture/bom-manifest#BomManifest')).toBeDefined()
+  })
+
   it('registers an explicit package without a Loader entry and withdraws it with the loader', LOADER_TEST_TIMEOUT, async () => {
     root = await mkdtemp(join(tmpdir(), 'dsh-typert-loader-'))
     await linkZod(root)

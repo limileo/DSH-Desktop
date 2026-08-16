@@ -330,7 +330,17 @@ export async function apply(ctx: Context, config: Config): Promise<void> {
       artifactPath.set(pkgName, null)
       return null
     }
-    const pkg = JSON.parse(readFileSync(pkgPath, 'utf8')) as Record<string, unknown>
+    let pkg: Record<string, unknown>
+    try {
+      // Keep package discovery compatible with manifests saved by Windows
+      // editors that prefix otherwise-valid JSON with a UTF-8 BOM.
+      pkg = JSON.parse(readFileSync(pkgPath, 'utf8').replace(/^\uFEFF/, '')) as Record<string, unknown>
+    } catch (cause) {
+      throw new Error(
+        `typert-loader: failed to parse package manifest for ${pkgName} at ${pkgPath}: ${String(cause)}`,
+        { cause },
+      )
+    }
     const rel = typertExportOf(pkgName, pkg.exports)
     if (rel === undefined && configured.has(pkgName)) {
       throw new Error(`typert-loader: configured package "${pkgName}" does not export "${TYPERT_HOST_EXPORT}"`)

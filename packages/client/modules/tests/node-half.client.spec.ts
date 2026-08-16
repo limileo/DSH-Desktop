@@ -21,12 +21,13 @@ afterEach(() => {
 function writePackage(
   packageName: string,
   metadata: Record<string, unknown> = { dsh: { client: { platform: 'web' } } },
+  manifestPrefix = '',
 ): string {
   root ??= realpathSync(mkdtempSync(join(tmpdir(), 'dsh-client-modules-')))
   const pkgRoot = join(root, 'node_modules', ...packageName.split('/'))
   const clientPath = join(pkgRoot, 'lib', 'client.js')
   mkdirSync(pkgRoot, { recursive: true })
-  writeFileSync(join(pkgRoot, 'package.json'), JSON.stringify({
+  writeFileSync(join(pkgRoot, 'package.json'), manifestPrefix + JSON.stringify({
     name: packageName,
     exports: {
       './client': './lib/client.js',
@@ -69,6 +70,15 @@ function construct(packageNames: string[]): ClientModuleRegistry {
 }
 
 describe('client bundle activation', () => {
+  it('accepts a package manifest prefixed by a UTF-8 BOM', () => {
+    const packageName = '@fixture/bom-manifest'
+    const clientPath = writePackage(packageName, { dsh: { client: { platform: 'web' } } }, '\uFEFF')
+    mkdirSync(dirname(clientPath), { recursive: true })
+    writeFileSync(clientPath, 'module.exports = {}\n')
+
+    expect(construct([packageName]).graph().entries.map(entry => entry.id)).toEqual([packageName])
+  })
+
   it('allows sibling dsh roles', () => {
     const currentName = '@fixture/current-client-field'
     const clientPath = writePackage(currentName, {

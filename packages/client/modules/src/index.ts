@@ -341,7 +341,18 @@ export class ClientModuleRegistry extends Service {
       this.pkgMeta.set(pkgName, null)
       return null
     }
-    const pkg = JSON.parse(readFileSync(pkgPath, 'utf8')) as Record<string, unknown>
+    let pkg: Record<string, unknown>
+    try {
+      // UTF-8 BOMs are common in package manifests created by Windows editors.
+      // Node's resolver accepts the package, so the metadata reader must not
+      // reject the same file solely because JSON.parse sees the BOM.
+      pkg = JSON.parse(readFileSync(pkgPath, 'utf8').replace(/^\uFEFF/, '')) as Record<string, unknown>
+    } catch (cause) {
+      throw new Error(
+        `client-modules: failed to parse package manifest for ${pkgName} at ${pkgPath}: ${String(cause)}`,
+        { cause },
+      )
+    }
     const dsh = pkg.dsh
     const decl = parseDshClient(
       pkgName,
