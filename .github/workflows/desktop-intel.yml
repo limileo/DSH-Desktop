@@ -60,14 +60,14 @@ jobs:
           test "$(lipo -archs "$executable")" = "x86_64"
           codesign --verify --deep --strict "$mount_dir/DSH Desktop.app"
 
-      - name: Prepare simple installer name
+      - name: Prepare user-friendly installer name
         run: |
           dmg="$(find apps/desktop/dist -maxdepth 1 -type f -name 'DSH-Desktop-macOS-x64-*.dmg' -print -quit)"
-          cp "$dmg" apps/desktop/dist/DSH-Desktop-macOS-x64.dmg
+          cp "$dmg" apps/desktop/dist/DSH-Desktop-macOS-Intel.dmg
 
       - uses: actions/upload-artifact@v4
         with:
-          name: DSH-Desktop-macOS-x64
-          path: apps/desktop/dist/DSH-Desktop-macOS-x64.dmg
+          name: DSH-Desktop-macOS-Intel
+          path: apps/desktop/dist/DSH-Desktop-macOS-Intel.dmg
           if-no-files-found: error
           retention-days: 30
