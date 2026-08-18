@@ -1,0 +1,73 @@
+name: Desktop macOS Intel installer
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: desktop-macos-intel-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  package-intel:
+    name: Build macOS Intel (x64)
+    runs-on: macos-15-intel
+    timeout-minutes: 120
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.23.2
+
+      - name: Enable pnpm
+        run: corepack enable
+
+      - name: Verify Intel runner
+        run: |
+          test "$(uname -m)" = "x86_64"
+          test "$RUNNER_ARCH" = "X64"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Intel installer
+        run: pnpm run dist:desktop:unsigned
+
+      - name: Verify DMG and application architecture
+        shell: bash
+        run: |
+          set -euo pipefail
+          dmg="$(find apps/desktop/dist -maxdepth 1 -type f -name 'DSH-Desktop-macOS-x64-*.dmg' -print -quit)"
+          test -n "$dmg"
+          hdiutil verify "$dmg"
+
+          mount_dir="$(mktemp -d)"
+          cleanup() {
+            hdiutil detach "$mount_dir" >/dev/null 2>&1 || true
+            rmdir "$mount_dir" >/dev/null 2>&1 || true
+          }
+          trap cleanup EXIT
+          hdiutil attach -readonly -nobrowse -mountpoint "$mount_dir" "$dmg" >/dev/null
+
+          executable="$mount_dir/DSH Desktop.app/Contents/MacOS/DSH Desktop"
+          test -x "$executable"
+          test "$(lipo -archs "$executable")" = "x86_64"
+          codesign --verify --deep --strict "$mount_dir/DSH Desktop.app"
+
+      - name: Prepare simple installer name
+        run: |
+          dmg="$(find apps/desktop/dist -maxdepth 1 -type f -name 'DSH-Desktop-macOS-x64-*.dmg' -print -quit)"
+          cp "$dmg" apps/desktop/dist/DSH-Desktop-macOS-x64.dmg
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DSH-Desktop-macOS-x64
+          path: apps/desktop/dist/DSH-Desktop-macOS-x64.dmg
+          if-no-files-found: error
+          retention-days: 30
