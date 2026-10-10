@@ -94,7 +94,7 @@ jobs:
           Conflicting files: $CONFLICT_COUNT
 
           This issue is maintained by the scheduled upstream check. Resolve the official changes on a dedicated branch, test the desktop application, and merge through a pull request. Installer builds continue to use the last verified \`master\` commit."
-          existing="$(gh issue list --state open --search \"$title in:title\" --json number --jq '.[0].number')"
+          existing="$(gh issue list --state open --search "$title in:title" --json number --jq '.[0].number')"
           if [ -n "$existing" ]; then
             gh issue edit "$existing" --title "$title" --body "$body"
           else
@@ -108,7 +108,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           title='sync: official Harness update needs manual integration'
-          existing="$(gh issue list --state open --search \"$title in:title\" --json number --jq '.[0].number')"
+          existing="$(gh issue list --state open --search "$title in:title" --json number --jq '.[0].number')"
           if [ -n "$existing" ]; then
             gh issue close "$existing" --comment 'The latest official Harness source now merges cleanly or is already included.'
           fi
