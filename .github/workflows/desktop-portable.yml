@@ -2,8 +2,6 @@ name: Desktop installers
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '17 2 * * *'
   push:
     branches: [master]
     paths:
@@ -36,14 +34,6 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: Merge the latest official source
-        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
-        shell: bash
-        run: |
-          git remote add official https://github.com/deepseek-ai/deepseek-harness.git || true
-          git fetch official master
-          git -c user.name=github-actions -c user.email=github-actions@github.com merge --no-edit official/master
 
       - uses: actions/setup-node@v4
         with:
